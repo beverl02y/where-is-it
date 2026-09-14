@@ -64,7 +64,7 @@
 
 1. Yes, I have experienced difficulty finding things.
 2. I usually have difficulty finding things that I do not use often, such as pills.
-3. One memorable experience happened about four years ago.
+3. One memorable experience happened last week.
 4. I noticed the item was missing when I needed it and it was not in its usual place.
 5. I checked the usual place first because I strongly thought the item should be there.
 6. I also checked my bag because it is something that I usually keep with me.
