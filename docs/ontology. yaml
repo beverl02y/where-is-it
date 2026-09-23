@@ -1,0 +1,129 @@
+project: Where-Is-It AI
+version: mini-ontology
+
+purpose:
+  en: >
+    Where-Is-It AI is an object location tracking and memory-assistance system
+    built for anyone who repeatedly misplaces everyday belongings — wallets,
+    keys, phones, remote controls, glasses — inside a home or office covered
+    by CCTV or home cameras. Losing track of small items happens for several
+    different reasons: the user simply forgets where they put something,
+    someone else moves it, a pet knocks it over or carries it off, it falls
+    from its original spot, or the user can't recall when or where they last
+    saw it. This can be especially difficult for people with memory
+    difficulties, but it is a problem anyone runs into in daily life. Existing
+    object-tracking solutions typically require attaching a physical tracker
+    or manually registering every item; Where-Is-It AI instead uses cameras
+    the user already has, combined with AI-based visual recognition, to
+    provide a more passive alternative.
+
+    The system is designed to answer more than the single question "Where is
+    my object right now?" It also answers the follow-up questions people
+    actually ask themselves once something goes missing: "Where was it last
+    seen?", "When did it disappear?", "What happened nearby right before it
+    disappeared?", and "Where should I look for it now?"
+
+    To do this, the system combines four capabilities: object detection
+    (recognizing everyday items in periodically captured camera frames),
+    location history (storing every detection with its timestamp, camera, and
+    confidence score, so an object's recent movements can be reconstructed
+    rather than only its current position), contextual reasoning (checking
+    what else — a person, a pet, another object — was nearby right before the
+    object disappeared, in order to suggest a plausible, evidence-backed
+    search area), and natural-language interaction (letting the user ask and
+    receive answers in everyday language, while clearly separating what the
+    camera actually confirmed from what is only an inferred possibility).
+
+    The target users are individuals in homes or offices who frequently
+    misplace belongings, including but not limited to people who experience
+    memory difficulties. The primary goal is to reduce the time and cognitive
+    load spent searching for misplaced items by turning passive camera
+    footage into an active memory aid; the secondary goals are to provide
+    confidence-based answers rather than false certainty, to improve accuracy
+    over time as more detections accumulate, and to do all of this while
+    respecting the user's privacy and the security of their camera data.
+      
+  ko: >
+    Where-Is-It AI는 집이나 사무실에서 지갑, 열쇠, 휴대폰, 리모컨, 안경과 같은
+    일상 소지품을 자주 잃어버리는 사용자를 위한 물건 위치 추적 및 기억 보조
+    시스템이다. 사람들이 물건을 잃어버리는 이유는 다양하다 — 사용자가 물건을
+    어디에 두었는지 단순히 잊어버리는 경우, 다른 사람이 물건을 옮긴 경우,
+    반려동물이 물건을 건드리거나 가져간 경우, 물건이 원래 자리에서 떨어진
+    경우, 또는 언제 어디서 마지막으로 봤는지 기억하지 못하는 경우 등이 있다.
+    이는 기억력에 어려움을 겪는 사람들에게 특히 더 큰 어려움이 될 수 있지만,
+    일상생활에서 누구에게나 발생할 수 있는 문제이다. 기존의 물건 추적
+    솔루션은 대부분 물리적인 추적 장치를 부착하거나 모든 물건을 직접
+    등록해야 하지만, Where-Is-It AI는 사용자가 이미 보유하고 있는 카메라와
+    AI 기반 시각 인식 기술을 결합하여 보다 수동적인 대안을 제공한다.
+
+    이 시스템은 단순히 "내 물건이 지금 어디 있지?"라는 질문에만 답하는 것을
+    목표로 하지 않는다. 물건을 잃어버렸을 때 사람들이 스스로에게 실제로
+    하게 되는 후속 질문들, 즉 "마지막으로 어디에서 봤지?", "언제 사라졌지?",
+    "사라지기 직전에 주변에서 무슨 일이 있었지?", "지금 어디를 찾아봐야
+    할까?"에도 답할 수 있도록 설계되었다.
+
+    이를 위해 시스템은 다음 네 가지 기능을 결합한다: 객체 탐지(주기적으로
+    캡처된 카메라 프레임에서 일상 물건을 인식), 위치 이력 관리(모든 탐지
+    결과를 시간, 카메라, 신뢰도 점수와 함께 저장하여 단순히 현재 위치뿐
+    아니라 물건의 최근 이동 경로까지 재구성 가능하게 함), 주변 상황
+    추론(물건이 사라지기 직전 주변에 있던 사람, 반려동물, 다른 물건 등의
+    정보를 확인하여 근거에 기반한 가능성 있는 검색 구역을 제안), 자연어
+    상호작용(사용자가 일상 언어로 질문하고 답을 받을 수 있도록 하며, 카메라가
+    실제로 확인한 사실과 단순히 추론된 가능성을 명확히 구분).
+
+    주요 대상 사용자는 집이나 사무실에서 소지품을 자주 잃어버리는 개인이며,
+    기억력에 어려움을 겪는 사람들을 포함하되 이에 국한되지는 않는다.
+    시스템의 주된 목표는 수동적인 카메라 영상을 능동적인 기억 보조 도구로
+    전환함으로써 잃어버린 물건을 찾는 데 소요되는 시간과 인지적 부담을
+    줄이는 것이며, 부차적인 목표로는 거짓된 확신 대신 신뢰도에 기반한
+    답변을 제공하는 것, 탐지 데이터가 축적됨에 따라 정확도를 점차 개선하는
+    것, 그리고 이 모든 과정에서 사용자의 개인정보와 카메라 데이터의 보안을
+    지키는 것이 있다.
+
+entities:
+  Object:
+    attributes: [name, category]
+  Query:
+    attributes: [questionText, objectName]
+  Detection:
+    attributes: [location, timestamp, confidence]
+  Camera:
+    attributes: [cameraId, room]
+  ContextEvent:
+    attributes: [involvedType, timestamp]   # involvedType: person | pet | object
+  Response:
+    attributes: [answer, confidenceLevel]
+
+relationships:
+  - subject: Object
+    relation: has
+    object: Detection
+    cardinality: 1:many
+  - subject: Query
+    relation: asksAbout
+    object: Object
+  - subject: Detection
+    relation: capturedBy
+    object: Camera
+  - subject: Detection
+    relation: coOccursWith
+    object: ContextEvent
+  - subject: Query
+    relation: produces
+    object: Response
+  - subject: Response
+    relation: basedOn
+    object: Detection
+
+reasoning_rules:
+  - Only detections with confidence > 70% are used.
+  - Search order: current sighting -> historical record -> contextual analysis.
+  - Confirmed detections are stated as fact; ContextEvent-based inferences are
+    stated only as a possibility, with supporting evidence, never as a
+    confirmed cause.
+
+output:
+  - location_or_last_seen
+  - confidence_level
+  - possibility_suggestion   # present only when object is not currently visible
+  - fact_vs_possibility_disclaimer
