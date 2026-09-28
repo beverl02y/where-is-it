@@ -84,7 +84,7 @@ entities:
   Object:
     attributes: [name, category]
   Query:
-    attributes: [questionText, objectName]
+    attributes: [questionText, objectName, questionType, urgency, checkedPlaces, lastUsedPlace]
   Detection:
     attributes: [location, timestamp, confidence]
   Camera:
