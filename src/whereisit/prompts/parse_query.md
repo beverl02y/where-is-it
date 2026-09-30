@@ -1,4 +1,4 @@
-# Where-Is-It AI 파싱 프롬프트 — parse_query.md (강의 3 산출물)
+# Where-Is-It AI 파싱 프롬프트 — parse_query.md
 
 | 항목 | 값 |
 |---|---|
