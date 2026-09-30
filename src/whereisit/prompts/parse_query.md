@@ -17,11 +17,11 @@
 - objectName에는 사용자가 찾는 물건을 가리키는 말을 발화에 나온 단어 그대로 쓴다. 물건 이름과 그 물건의 겉모습 표현(색, 재질, 브랜드, 모양)만 남기고, "그", "저", "내", "룸메이트"처럼 가리키거나 주인을 나타내는 말은 뺀다.
 - objectName을 번역하거나 다른 말로 바꾸거나 표현을 덧붙이지 않는다. "폰"은 "폰"으로 쓰고, 발화에 없는 색이나 브랜드를 붙이지 않는다.
 - 물건 이름이 없으면("그거", "그 까만 거") 그 Query의 objectName은 null이다. 어떤 물건인지 추측하지 않는다.
-- For each item the user is looking for, create one Query in the queries array, in the order mentioned ("my phone and wallet" → two Queries).
-- Every Query from the same utterance has the same questionText. If urgency, checkedPlaces or lastUsedPlace clearly apply to all items, put them in every Query; if they clearly apply to one item, put them only in that Query.
-- questionType: "where is it" → current_location, "when did I last see it" → last_seen, "when did it disappear" → disappeared_when, "what happened around it" → nearby_context, "where should I look" → where_to_look. Omit if unclear.
-- urgency: high for expressions like "I'm late", "I have to leave now"; low for "it's not urgent". Otherwise omit.
-- checkedPlaces: places the user says they already searched, in their exact words. lastUsedPlace: where they last used or left it, in their exact words. Do not add places that were not said.
+- 찾는 물건 하나마다 queries 배열에 Query를 하나씩 만들고, 발화에 나온 순서대로 넣는다("폰이랑 지갑" → Query 2개).
+- 같은 발화에서 나온 Query는 모두 같은 questionText를 갖는다. urgency, checkedPlaces, lastUsedPlace가 모든 물건에 해당하는 것이 분명하면 모든 Query에 넣고, 한 물건에만 해당하는 것이 분명하면 그 Query에만 넣는다.
+- questionType: "어디 있어" → current_location, "마지막으로 언제 봤어" → last_seen, "언제 없어졌어" → disappeared_when, "그 주변에서 무슨 일이 있었어" → nearby_context, "어디를 찾아봐야 해" → where_to_look. 분명하지 않으면 생략한다.
+- urgency: "늦었어", "지금 나가야 돼" 같은 표현이면 high, "급한 건 아닌데" 같은 표현이면 low. 그 밖에는 생략한다.
+- checkedPlaces: 사용자가 이미 찾아봤다고 말한 곳을 발화에 나온 말 그대로 쓴다. lastUsedPlace: 마지막으로 쓰거나 둔 곳을 발화에 나온 말 그대로 쓴다. 말하지 않은 장소는 넣지 않는다.
 - 그 물건이 시스템에 있는지는 판단하지 않는다. 처음 듣는 물건도 발화에 나온 대로 쓴다.
 - 출력은 JSON 객체 하나만 쓴다. 설명, 코드 펜스, 주석을 붙이지 않는다.
 
