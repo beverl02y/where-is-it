@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ParseResult",
+  "description": "Where-Is-It: structured result of parsing the user's item-finding utterance — one Query per item (Lecture 3 deliverable)",
+  "type": "object",
+  "properties": {
+    "queries": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/Query"}, "description": "One Query per item, in the order mentioned"}
+  },
+  "required": ["queries"],
+  "additionalProperties": false,
+  "definitions": {
+    "Query": {
+      "type": "object",
+      "properties": {
+        "questionText": {"type": "string", "minLength": 1, "description": "Original utterance, verbatim"},
+        "objectName": {"type": ["string", "null"], "minLength": 1, "description": "Item words exactly as said. null if no item name"},
+        "questionType": {"type": "string", "enum": ["current_location", "last_seen", "disappeared_when", "nearby_context", "where_to_look"], "description": "Allowed values only. Omit if unclear"},
+        "urgency": {"type": "string", "enum": ["high", "low"], "description": "Omit if not expressed"},
+        "checkedPlaces": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true, "description": "Places already searched, as said. Omit if none"},
+        "lastUsedPlace": {"type": "string", "minLength": 1, "description": "Where last used or left, as said. Omit if none"}
+      },
+      "required": ["questionText", "objectName"],
+      "additionalProperties": false
+    }
+  }
+}
