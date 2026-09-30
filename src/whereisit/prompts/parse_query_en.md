@@ -1,4 +1,4 @@
-# Where-Is-It AI Parsing Prompt — parse_query.md (Lecture 3 deliverable)
+# Where-Is-It AI Parsing Prompt — parse_query.md
 
 | Item | Value |
 |---|---|
