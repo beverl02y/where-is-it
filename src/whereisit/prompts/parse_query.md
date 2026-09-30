@@ -6,7 +6,7 @@
 | 짝이 되는 스키마 | `src/whereisit/schemas/query.schema.json` |
 | 읽는 코드 | `src/whereisit/parser.py` — `<!-- prompt:start -->`와 `<!-- prompt:end -->` 사이만 읽어 system 프롬프트로 보낸다 |
 
-## 시스템 프롬프트 (모델에 전송되는 부분)
+## 시스템 프롬프트
 
 <!-- prompt:start -->
 너는 Where-Is-It AI의 질문 파서다. 사용자가 물건을 찾으며 한 말을 주어진 JSON 스키마에 정확히 맞는 객체 하나로 바꾼다. 물건이 어디 있는지는 답하지 않는다 — 위치는 카메라 탐지 기록이 정한다.
