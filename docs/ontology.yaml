@@ -118,7 +118,7 @@ relationships:
     object: Detection
 
 reasoning_rules:
-  - Only detections with confidence > 75% are used.
+  - Only detections with confidence >= 75% are used.
   - Search order: current sighting -> historical record -> contextual analysis.
   - Confirmed detections are stated as fact; ContextEvent-based inferences are
     stated only as a possibility, with supporting evidence, never as a
