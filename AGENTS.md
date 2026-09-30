@@ -11,6 +11,13 @@
 - Reference: Problem.md for the detailed problem definition, interview evidence, and success criteria.
 
 ## 2. Domain Glossary
+- Object: name, category.
+- Query: questionText, objectName.
+- Detection: location, timestamp, confidence.
+- Camera: cameraId, room.
+- ContextEvent: involvedType (person/pet/object), timestamp.
+- Response: answer, confidenceLevel.
+- Reference: ontology.yaml for full definitions and relationships.
 
 ## 3. Mandatory Rules
 
