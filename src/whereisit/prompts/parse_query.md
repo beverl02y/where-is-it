@@ -33,9 +33,9 @@
 입력: 아 그거 어디 갔지
 출력: {"queries":[{"questionText":"아 그거 어디 갔지","objectName":null}]}
 
-Example 3
-Input: I'm late, where are my phone and black wallet? Not on the desk.
-Output: {"queries":[{"questionText":"I'm late, where are my phone and black wallet? Not on the desk.","objectName":"phone","questionType":"current_location","urgency":"high","checkedPlaces":["desk"]},{"questionText":"I'm late, where are my phone and black wallet? Not on the desk.","objectName":"black wallet","questionType":"current_location","urgency":"high","checkedPlaces":["desk"]}]}
+예시 3
+입력: 나 늦었는데 폰이랑 까만 지갑 어디 있어? 책상엔 없어.
+출력: {"queries":[{"questionText":"나 늦었는데 폰이랑 까만 지갑 어디 있어? 책상엔 없어.","objectName":"폰","questionType":"current_location","urgency":"high","checkedPlaces":["책상"]},{"questionText":"나 늦었는데 폰이랑 까만 지갑 어디 있어? 책상엔 없어.","objectName":"까만 지갑","questionType":"current_location","urgency":"high","checkedPlaces":["책상"]}]}
 <!-- prompt:end -->
 
 ## 필드 → 함수 인자 (하드/소프트)
