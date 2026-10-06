@@ -49,6 +49,5 @@ Relevant tests and golden cases pass, configured lint checks report no issues, t
 
 
 
-### Progress Tracking
 
-Do not record implementation progress in this file. Use test results and a separate findings document.
+
