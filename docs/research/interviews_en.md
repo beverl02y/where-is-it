@@ -4,9 +4,24 @@
 
 **Target (who, and why):** University students who, within the past month, have actually searched for an item in their living space, such as a studio apartment or dormitory. They are selected so that, through a recent and specific experience, we can confirm where they started looking, the order of their search, the time it took, where the item was found, and the inconveniences they experienced along the way.
 
+**Interview Questions**
+ 
+We asked the following 10 questions to 10 university students.
+ 
+- **Q1.** Do you sometimes have trouble remembering where you put your things?
+- **Q2.** What kinds of items do you usually have trouble finding?
+- **Q3.** Tell me about the most recent time you had difficulty finding something.
+- **Q4.** When and how did you realize that you could not find the item?
+- **Q5.** Where did you look first, and why did you check that place first?
+- **Q6.** Where did you search after that, and in what order?
+- **Q7.** Have you ever used an app, tracking device, or another person's help to find an item? If yes, did it actually help?
+- **Q8.** How long did it take, and what was the most inconvenient part of the search?
+- **Q9.** Where did you finally find the item, and what made you check that place?
+- **Q10.** What information or help would have helped you find the item faster at that time?
+
 **What we want to find out (hypothesis):** The time it takes to find an item comes less from situations where the person has no idea where the item is, and more from repeatedly checking the places where they usually keep things while under time pressure, such as right before going out. In addition, even though existing tracking tools like Find My and Apple Tag can show an item's approximate location, they will have limitations when it comes to finding the exact spot where the item is actually placed indoors.
 
-**5 Questions**
+**5 Core Questions for Testing the Hypothesis**
 
 1. Tell me about the most recent time you had difficulty finding something. When and how did you realize that you could not find the item? (Q3, Q4) — A specific past event and its trigger
 2. Where did you look first, and why did you check that place first? Where did you search after that, and in what order? (Q5, Q6) — The actual search order and the reasoning behind it
