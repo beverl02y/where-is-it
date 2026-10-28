@@ -228,49 +228,65 @@ The actual human labels and model outputs will be stored in:
 - `spike/outputs.jsonl`
 - `spike/results.csv`
 
+## 5. Results-after-testing
+
+### 5.1 Evaluation-round history
+
+The preserved CSV files show multiple evaluation rounds. Their results are reported separately to avoid representing iterative prompt tuning as a single untouched test.
+
+| Available results file | Matches / 120 | Match rate | False-certainty cases / 120 | False-certainty rate | Verdict |
+|---|---:|---:|---:|---:|---|
+| `results.csv` | 105 | 87.5% | 7 | 5.8% | FAIL |
+| `results (2).csv` | 107 | 89.2% | 3 | 2.5% | FAIL |
+| `results (4).csv` | 110 | 91.7% | 4 | 3.3% | FAIL |
+| `results (5).csv` | **109** | **90.8%** | **2** | **1.7%** | **PASS** |
+
+*File names distinguish available exports; they do not independently establish the chronological order of all runs.*
+
+### 5.2 Passing-round result
+
+The passing evaluation (`results (5).csv`) contains:
+
+| Metric | Observed result | Required condition | Status |
+|---|---:|---:|---|
+| Photos | 20 | 20 | Completed |
+| Photo-item pairs | 120 | 120 | Completed |
+| Matches | 109 | ≥108 | PASS |
+| Match rate | **90.8%** | ≥90% | PASS |
+| Missed detections | 9 | Diagnostic | — |
+| False certainty: wrong area | 2 | Diagnostic | — |
+| False certainty: item not there | 0 | Diagnostic | — |
+| Total false certainty | **2** | ≤2 | PASS |
+| False-certainty rate | **1.7%** | ≤2% | PASS |
+
+**Overall verdict for this evaluation round: PASS.** Both predefined numerical criteria are satisfied.
+
+The remaining 11 mismatches consist of nine misses and two wrong-area false-certainty cases. The results demonstrate feasibility for the six supported items and four predefined areas in this 20-image evaluation, not universal reliability across rooms, cameras, or unseen conditions.
+
+### 5.3 Evidence
+
+- Human annotations: `labels_A.csv`, `labels_B.csv`, and `labels.csv`
+- Scored per-pair output for the passing round: `results (5).csv`
+- Scoring program and model configuration: preserve the versions corresponding to that run
+- Raw output and prompt hash: attach the corresponding archived `outputs.jsonl` and console log if available
 
 ## 6. Decision and Retry Conditions
 
 ### Decision
 
-No decision is made before the experiment.
+**PASS for the recorded evaluation round.** Gemini-based image analysis met both numerical feasibility thresholds: **90.8% match rate** and **1.7% false-certainty rate**. This supports continuing with camera-based object detection as an MVP component for the tested scope.
 
-The object-detection approach will be adopted for the Where-Is-It AI MVP if:
+Because several prompt/evaluation rounds were performed on the same collection of images, the passing score should be described as an **iterative development-set result**, not as an unbiased estimate of performance on previously unseen photos.
 
-- Match rate ≥ 90%, and
-- False-certainty rate ≤ 2%.
+### Specification and Ontology implications
 
-If either condition is not satisfied, the error types will be analyzed before
-deciding whether the current approach should be changed.
-
-
-### Reflection in the Specification and Ontology
-
-If the spike passes, object detection will remain a core function of the MVP.
-
-Only reliable detections with confidence ≥ 75% will be used for confirmed
-location information.
-
-If the confidence is below the threshold or the object cannot be reliably
-identified from the camera image, the system must not present the object's
-location as a confirmed fact.
-
+- Retain **Object Detection** as a core MVP function in the **Detect → Save → Search → Explain** flow.
+- Use detections with confidence **≥ 0.75** for confirmed location records under the project's current policy.
+- If an object is not reliably visible, do not invent a current location; use an available last-seen record or state that the camera evidence is insufficient.
+- Keep the initial spike scope limited to six classes and four areas. Other objects or locations require separate validation.
 
 ### Retry Conditions
 
-If the spike does not meet the passing threshold, the team will analyze whether
-the errors are mainly caused by:
+Before claiming generalizable performance, freeze the final model, prompt, threshold, and scoring procedure, then evaluate them **once on a fresh, independently labeled set of photos**. If the fresh set fails either threshold, inspect missed small/occluded objects and wrong-area classifications, revise the method, and test on another unused set. Do not change the original acceptance thresholds after seeing results.
 
-- repeated failures for a particular object class
-- small or partially occluded objects
-- repeated wrong-area classifications
-- high-confidence detection of objects that are not actually visible
-
-After identifying the main failure type, the prompt, model, or supported object
-scope may be revised.
-
-The system will then be tested again using a **separate evaluation dataset that
-was not used to make those revisions**.
-
-For any retry, the evaluation rules and passing threshold will again be fixed
-before examining the new test results.
+**Final conclusion:** The spike demonstrates promising technical feasibility and passes the stated criteria on the recorded evaluation data. Independent validation remains the next step before relying on these rates in deployment.
