@@ -2,22 +2,16 @@
 
 ## 1. One-Sentence Problem Definition
 
-University students and young adults living in small spaces such as one-room apartments or dormitories sometimes cannot find everyday personal belongings such as glasses, cards, keys, and earphones when those items are not in their usual places. Because they do not know where the item was last seen, they may spend unnecessary time searching multiple locations.
+University students who cannot remember where they last used or placed an everyday belonging may spend about 5–15 minutes searching several places when they need it, causing stress and a risk of being late.
 
 
 ## 2. Target and Non-Target Users
 
 ### 2.1 Primary Target Users
-The primary target users are **university students who repeatedly have difficulties in
-finding everyday belongings inside their room**.
-This version focuses especially on small or frequently used objects
-such as:
--   Glasses
--   Wallet
--   Cards
--   Earphones
--   Phone
--   Charger
+The primary target users are **university students who repeatedly have difficulties in finding everyday belongings inside their room**.
+
+The supported v1 item classes and their canonical names are defined in `ontology.yaml`. This document refers to that shared definition instead of maintaining a separate item list.
+
 The system is particularly relevant to users who:
 -   Often forget where they placed an object.
 -   Check the same usual locations repeatedly.
@@ -37,77 +31,139 @@ The system is particularly relevant to users who:
 
 ## 3. Evidence from User Interviews
 
-Ten participants were interviewed about their experiences with misplaced belongings. All ten participants reported having experienced difficulty finding personal items.
+The supplied interview records contain responses from ten participants. The following evidence includes quotations with log and question numbers so that each claim can be checked against the source.
 
 The interviews showed several recurring patterns.
 
 ### 3.1 Difficulty Finding Small Everyday Objects
 
-Participants frequently mentioned difficulty finding small everyday belongings such as glasses, cards, earphones, phones, chargers, documents, and hair ties.
+Participants described specific situations in which they could not find everyday belongings.
 
-Examples from the interview logs include:
+- **Log 1, Q4:** "I noticed that I could not find my card wallet when I needed it before making a payment."
 
-- Hair ties: logs 1, 7, 8, 9
-- Cards: logs 1, 6, 7, 10
+- **Log 3, Q3:** "A recent example was when I could not find my phone before going to work."
 
-This shows that difficulty finding small everyday belongings was a repeated problem among the participants.
+- **Log 6, Q4:** "I was about to go to class and wanted to bring my AirPods, but they were not in the usual place."
+
+- **Log 8, Q3:** "One example was when I could not find my hair tie before taking a shower."
+
+- **Log 10, Q3:** "A few days ago, I could not find my glasses before going to class."
+
+Other item types were mentioned in the category questions:
+
+- **Log 10, Q2:** "I usually have difficulty finding my glasses, charger, and student card."
+
+Source: `interview_answers.md`, Participants 1, 3, 6, 8, and 10.
+
+These responses help identify relevant item types for the project. Whether the camera can reliably recognize them must be evaluated separately.
 
 
-### 3.2 Missing Objects Are Usually Noticed When Needed
+### 3.2 Missing Objects Are Noticed When Needed
 
-Many participants noticed that an item was missing only when they needed to use it.
+Several participants described noticing that an item was missing when they needed to use it or were preparing to leave.
 
-Examples include:
+- **Log 1, Q4:** "I noticed that I could not find my card wallet when I needed it before making a payment."
 
-- Preparing to go to class (log 10)
-- Going to work (log 3)
-- Going outside (log 7)
-- Needing the item for another activity (logs 1, 2, 4, 5, 6, 8, 9)
+- **Log 6, Q4:** "I was about to go to class and wanted to bring my AirPods, but they were not in the usual place."
 
-This shows that users often begin searching at a moment when they already need the item.
+- **Log 10, Q4:** "I noticed that I could not find them when I was getting ready to leave."
+
+One participant also described the pressure caused by searching while in a hurry:
+
+- **Log 10, Q8:** "It took around 10 minutes. I was in a hurry, so I became stressed because I could not find them quickly."
+
+Source: `interview_answers.md`, Participants 1, 6, and 10.
+
+These accounts show that searching sometimes interrupted another activity or preparations to leave. Whether the proposed system reduces this search time and pressure needs to be tested.
 
 
 ### 3.3 Users Search Usual Locations First
 
-Participants commonly checked the place where they normally kept an item before searching other locations.
+Several participants began by checking where they normally kept the item.
 
-Common locations included desks, beds, tables, cupboards, and bags.  
-(logs 1–6)
+- **Log 1, Q5:** "I checked my bag first because I usually put it there."
 
-When the item was not in its usual location, participants continued searching other possible places.
+- **Log 6, Q5:** "I checked the table first because that is where I usually put them."
+
+- **Log 10, Q5:** "I checked my desk first because that is where I usually put my glasses."
+
+When the item was not there, participants described searching other places.
+
+- **Log 6, Q6:** "After that, I checked my bag because I thought I might have put them there."
+
+- **Log 10, Q6:** "After that, I checked my bed, bedside table, and bag."
+
+Source: `interview_answers.md`, Participants 1, 6, and 10.
+
+These accounts show a search pattern that starts at the usual storage place and expands to other possible locations when the item is not found.
 
 
 ### 3.4 Limitations of Existing Finder Applications
 
-Some participants had experience using services such as Apple Find My or Samsung Find My Device.
+Two participants reported that finder services helped indicate that an item was nearby but did not identify its exact indoor location.
 
-These services could help users understand that an item was nearby, but participants still had difficulty identifying the item's specific indoor location.  
-(logs 1, 6, 9)
+- **Log 6, Q8:** "Find My Device only shows the general location on a map, but I already know the item is nearby. I need more detailed information."
 
-This shows that general location information may not be enough when users are searching for an item inside a room.
+- **Log 9, Q7:** "It helped, but it only showed that the earbuds were nearby and did not show the exact location."
+
+Source: `interview_answers.md`, Participants 6 and 9.
+
+These accounts suggest that knowing an item is nearby may not be enough when searching for its specific location inside a room.
 
 
 ### 3.5 Importance of the Last-Seen Location
 
-Several participants found missing objects by remembering where they had last used or seen them.  
-(logs 3, 6, 7, 8, 9, 10)
+Three participants described finding an item by remembering where they had previously used it.
 
-This suggests that knowing the last-seen location can help reduce the number of places a user needs to search.
+- **Log 1, Q9:** "I found the card wallet at a copy shop because that was the last place where I used it."
+
+- **Log 6, Q9:** "I finally found the AirPods in a bag under the pillow. I checked the bed because that was where I had used them before."
+
+- **Log 10, Q9:** "I finally found the glasses beside my bed under some clothes. I remembered that I had used them on the bed the previous night."
+
+Source: `interview_answers.md`, Participants 1, 6, and 10.
+
+These accounts suggest that remembering the last-used location can help narrow a search. Whether camera-recorded last-seen information provides a similar benefit remains a hypothesis to be tested.
 
 
 ### 3.6 Visibility Can Affect Whether an Object Is Easy to Find
 
-Some interview cases involved objects being placed in bags, drawers, cupboards, or other locations where they were difficult to notice.  
-(logs 1–6)
+Some participants described objects being covered by other things or placed inside a bag.
 
-This shows that whether an object is visible is an important factor when trying to locate it.
+- **Log 2, Q3:** "Documents are difficult to find because they are thin and can easily be hidden under other things."
+
+- **Log 6, Q9:** "I finally found the AirPods in a bag under the pillow."
+
+- **Log 10, Q9:** "I finally found the glasses beside my bed under some clothes."
+
+Source: `interview_answers.md`, Participants 2, 6, and 10.
+
+These accounts show that objects can be difficult to notice when they are covered or hidden.
+
+For the camera-based solution, an object fully hidden from the camera cannot be visually confirmed from that image. If an earlier reliable record exists, the system can report its last recorded location and time without claiming that it is still there.
 
 
 ## 4. Falsification Conditions
 
-### 4.1 Problem Existence
+### 4.2 Solution Hypothesis
 
-The problem definition should be reconsidered if further interviews with the target users do not show repeated recent experiences of spending time searching for misplaced everyday belongings.
+Hypothesis: showing an item's recorded last-seen location and time helps users choose where to search first and reduces their search time.
+
+Test this with five target users. Each participant completes two comparable item-search tasks: one without the system and one with the system. Use different placements and alternate the task order to reduce practice effects.
+
+Record the search time, whether the item was found, and whether the participant first searched the location shown by the system. Apply the same 180-second limit to both tasks. Record an unsuccessful search as 180 seconds and retain its failure status.
+
+Reject or revise the solution hypothesis if either condition occurs:
+
+- Fewer than four of five participants first search the location shown by the system.
+- The median search-time reduction is below 30%.
+
+Calculate each participant's reduction as:
+(baseline search time - system-assisted search time) / baseline search time × 100.
+
+A baseline time must be greater than zero. If fewer than five participants have valid measurements for both tasks, report INCONCLUSIVE.
+
+These thresholds are proposed rules for a future test. The test has not yet been conducted, and no improvement is claimed.
 
 ### 4.2 Solution Hypothesis
 
@@ -118,11 +174,22 @@ The hypothesis should also be reconsidered if the provided last-seen information
 
 ## 5. Definition of Success
 
-Success will be evaluated using observable user behavior rather than only user satisfaction.
+Success will be evaluated using observable behavior during the test described in Section 4.2.
 
-The project will examine:
+For each participant, record:
 
-- Whether users check the last-seen location and time when searching for an item
-- Whether users search the location suggested by the system first
-- Whether the time required to find an item decreases when the system is used
-- Whether users use the system again when they experience a similar situation
+| Indicator | What to record |
+|---|---|
+| Checking the information | Whether the participant reads the last-seen location and time |
+| First search location | Where the participant searches first and whether it matches the location shown |
+| Search time | The measured time for each task, with and without the system |
+| Task completion | Whether the item is found within the time limit |
+| Unsuccessful searches | Record timeouts and failures using the procedure in Section 4.2 |
+
+Use the decision thresholds and calculation defined in Section 4.2 to judge the solution hypothesis. Do not remove unsuccessful searches from the results.
+
+If the required measurements are incomplete, report INCONCLUSIVE. If either rejection condition is met, revise the solution hypothesis.
+
+Repeat use can be recorded during a later session if it actually occurs. A participant saying they would use the system again does not count as observed repeat use.
+
+These are planned evaluation measures. No user-test results have been collected for this revision.
