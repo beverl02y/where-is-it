@@ -10,7 +10,7 @@ vocabulary:
     - phone
     - charger
     - hairtie
-    
+
   places:
     - desk
     - table
@@ -23,6 +23,34 @@ vocabulary:
     - under_table
     - held_by_person
     - other
+
+  item_aliases:
+    glasses: [안경]
+    wallet: [지갑, "card wallet", "card purse", "카드 지갑"]
+    card: [카드, 학생증, "student card"]
+    earphones: [이어폰, 에어팟, earbuds, AirPods]
+    phone: [휴대폰, 핸드폰, 폰, smartphone]
+    charger: [충전기]
+    hairtie: ["hair tie", 머리끈]
+
+  place_aliases:
+    desk: [책상]
+    table: [테이블]
+    bed: [침대]
+    bedside_table: ["bedside table", 협탁, "침대 옆 탁자"]
+    bag: [가방]
+    drawer: [서랍]
+    cupboard: [찬장]
+    sofa: [소파, couch]
+    under_table: ["under the table", "테이블 아래"]
+    held_by_person: ["held by a person", "사람이 들고 있음"]
+    other: [기타]
+
+  alias_rules:
+    - Canonical names are also valid. Preserve the original Query wording.
+    - Prefer the longest matching phrase, so card wallet maps to wallet rather than card.
+    - Preserve appearance and relative-location details; ask if the object remains ambiguous.
+    - desk and table remain distinct place values.
 
 policy:
   min_confirmed_confidence: 0.75
@@ -44,6 +72,13 @@ evidence_sources:
   query_schema:
     file: query.schema.json
     kind: interface_design
+    
+validation_scope:
+  historical_spike:
+    item_subset: [glasses, wallet, card, earphones, phone, hairtie]
+    place_subset: [table, under_table, sofa, held_by_person]
+    evidence_source: spike_plan
+    limitation: Historical results apply only to this subset and the evaluated images.
 
 purpose:
   en: >
