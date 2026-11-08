@@ -1,131 +1,259 @@
 project: Where-Is-It AI
 version: mini-ontology
 
+vocabulary:
+  items:
+    - glasses
+    - wallet
+    - card
+    - earphones
+    - phone
+    - charger
+    - hairtie
+    
+  places:
+    - desk
+    - table
+    - bed
+    - bedside_table
+    - bag
+    - drawer
+    - cupboard
+    - sofa
+    - under_table
+    - held_by_person
+    - other
+
+policy:
+  min_confirmed_confidence: 0.75
+  confidence_comparison: ">="
+
+evidence_sources:
+  interviews:
+    file: interview_answers.md
+    kind: supplied_interview_responses
+
+  spike_plan:
+    file: spikes_2026-10-07_where-is-it.md
+    kind: technical_test_design
+
+  design:
+    file: SPEC.md
+    kind: solution_design
+
+  query_schema:
+    file: query.schema.json
+    kind: interface_design
+
 purpose:
   en: >
-    Where-Is-It AI is an object location tracking and memory-assistance system
-    built primarily for university students who repeatedly misplace everyday
-    belongings — wallets, cards, phones, earphones, glasses, and chargers —
-    inside small spaces such as one-room apartments or dormitories covered
-    by cameras. Users may forget where they put something or cannot recall
-    when or where they last saw it. They often notice an item is missing
-    only when they need it, then check its usual location before searching
-    other places. Existing finder services can help indicate that an item
-    is nearby, but users may still have difficulty identifying its specific
-    indoor location. Where-Is-It AI uses camera images combined with
-    AI-based visual recognition to provide a more passive alternative.
-
-    The system is designed to answer the questions people ask when something
-    goes missing: "Where was it last seen?", "When was it last detected?",
-    and "Where should I look for it first?"
-
-    To do this, the system combines three capabilities: object detection
-    (recognizing supported everyday items in periodically captured camera
-    frames), location history (storing each detection with its timestamp,
-    camera, and confidence score so the latest recorded location can be
-    retrieved), and natural-language interaction (letting users ask and
-    receive answers in everyday language while clearly explaining what the
-    camera actually recorded). Detection is limited to supported items
-    visible to the camera. Items hidden inside closed drawers or bags
-    cannot be detected, and the last recorded location does not guarantee
-    the item's current location.
-
-    The primary target users are university students who frequently have
-    difficulty finding personal belongings inside their rooms. Managing
-    multiple family members' belongings or business equipment is outside
-    the project's target scope. The primary goal is to reduce the time
-    and effort spent searching by turning passive camera images into an
-    active memory aid. The system should provide confidence-based answers
-    rather than false certainty while respecting users' privacy and the
-    security of their camera data. Success will be evaluated by observing
-    whether users check the last-seen location and time, search the indicated
-    location first, spend less time finding an item, and use the system
-    again when a similar situation occurs.
+    Where-Is-It AI aims to help university students reduce the time spent
+    searching for everyday belongings in one room. It uses images from a
+    single camera to record supported items' locations and detection times,
+    then answers natural-language questions using the latest reliable
+    record. Only items visible to the camera can be detected, and the
+    last recorded location does not guarantee the item's current location.
 
   ko: >
-    Where-Is-It AI는 원룸이나 기숙사처럼 작은 공간에서 지갑, 카드,
-    휴대폰, 이어폰, 안경, 충전기와 같은 일상 소지품을 자주 찾지 못하는
-    대학생을 주요 대상으로 하는 물건 위치 추적 및 기억 보조 시스템이다.
-    사용자는 물건을 어디에 두었는지 잊어버리거나, 언제 어디서 마지막으로
-    봤는지 기억하지 못해 물건을 찾는 데 어려움을 겪는다. 특히 물건이
-    필요할 때 없다는 사실을 알아차리고, 평소 두는 장소에 없으면 여러
-    곳을 반복해서 찾는 경우가 많다. 이는 일상생활에서 누구에게나
-    발생할 수 있는 문제이다. 기존의 물건 찾기 서비스는 물건이 근처에
-    있다는 정보를 제공할 수 있지만, 실내의 구체적인 위치를 파악하기는
-    어려울 수 있다. Where-Is-It AI는 카메라와 AI 기반 시각 인식 기술을
-    결합하여 물건의 마지막 감지 위치와 시각을 제공한다.
-
-    이 시스템은 단순히 "내 물건이 어디 있지?"라는 질문에만 답하는 것을
-    목표로 하지 않는다. 물건을 찾지 못할 때 사람들이 스스로에게
-    실제로 하게 되는 후속 질문들, 즉 "마지막으로 어디에서 봤지?",
-    "마지막으로 언제 감지되었지?", "어디부터 찾아보면 좋을까?"에도
-    답할 수 있도록 설계되었다.
-
-    이를 위해 시스템은 다음 세 가지 기능을 결합한다: 객체 탐지
-    (주기적으로 캡처된 카메라 프레임에서 지원 대상 물건을 인식),
-    위치 이력 관리(각 탐지 결과를 시각, 카메라, 신뢰도 점수와 함께
-    저장하여 물건의 마지막 기록 위치를 확인), 자연어 상호작용
-    (사용자가 일상 언어로 질문하고 답을 받을 수 있도록 하며,
-    카메라가 실제로 기록한 내용을 명확히 전달).
-    탐지는 카메라에 보이는 지원 대상 물건으로 제한되며, 닫힌 서랍이나
-    가방 안의 물건은 탐지할 수 없다. 또한 마지막으로 기록된 위치가
-    물건의 현재 위치를 보장하지는 않는다.
-
-    주요 대상 사용자는 방 안에서 개인 소지품을 찾는 데 반복적으로
-    어려움을 겪는 대학생이다. 여러 가족 구성원의 물건이나 업무용
-    장비를 관리하는 용도는 대상 범위에 포함하지 않는다.
-    시스템의 주된 목표는 카메라 이미지를 기억 보조 도구로 활용하여
-    물건을 찾는 데 소요되는 시간과 노력을 줄이는 것이며, 이 과정에서
-    거짓된 확신 대신 신뢰도에 기반한 답변을 제공하고 사용자의
-    개인정보와 카메라 데이터의 보안을 지키는 것이다.
-    성공 여부는 사용자가 마지막 감지 위치와 시각을 확인하는지,
-    안내된 위치를 먼저 찾아보는지, 물건을 찾는 시간이 줄어드는지,
-    비슷한 상황에서 시스템을 다시 사용하는지를 관찰하여 평가한다.
+    Where-Is-It AI는 대학생이 방 안에서 일상 소지품을 찾는 데 드는
+    시간을 줄이는 것을 목표로 한다. 카메라 한 대의 이미지에서 지원
+    대상 물건의 위치와 감지 시각을 기록하고, 자연어 질문에 가장 최근의
+    신뢰할 수 있는 기록을 바탕으로 답한다. 카메라에 보이는 물건만
+    탐지할 수 있으며, 마지막 기록 위치가 현재 위치를 보장하지는 않는다.
 
 entities:
   Object:
-    attributes: [name, category]
+    evidence: [{source: interviews, participant: 3, question: 3}, {source: interviews, participant: 10, question: 3}]
+    attributes:
+      name:
+        type: string
+        description: Descriptive item name, such as black wallet.
+        evidence: [{source: interviews, participant: 6, question: 2}, {source: design, section: "5"}]
+      category:
+        type: string
+        allowed_values_ref: vocabulary.items
+        evidence: [{source: interviews, participant: 3, question: 2}, {source: interviews, participant: 6, question: 2}, {source: interviews, participant: 7, question: 2}, {source: interviews, participant: 10, question: 2}]
+      usualPlace:
+        type: string
+        nullable: true
+        allowed_values_ref: vocabulary.places
+        description: Explicitly user-provided usual place; null when unknown.
+        evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 5}]
+
+  Place:
+    evidence: [{source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 6}]
+    attributes:
+      name:
+        type: string
+        allowed_values_ref: vocabulary.places
+        evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 2, question: 6}, {source: interviews, participant: 4, question: 5}, {source: interviews, participant: 10, question: 5}, {source: interviews, participant: 10, question: 6}, {source: spike_plan, section: "4. Method"}, {source: design, decision: "other is a fallback place label"}]
+
   Query:
-    attributes: [questionText, objectName, questionType, urgency, checkedPlaces, lastUsedPlace]
+    kind: interaction_design
+    evidence: [{source: query_schema, pointer: "#/definitions/Query"}]
+    attributes:
+      questionText:
+        type: string
+        description: Exact original utterance; always required.
+        evidence: [{source: query_schema, pointer: "#/definitions/Query/properties/questionText"}]
+      objectName:
+        type: string
+        nullable: true
+        description: Exact item phrase; required key, null if no item is identifiable.
+        evidence: [{source: interviews, participant: 3, question: 2}, {source: query_schema, pointer: "#/definitions/Query/properties/objectName"}]
+      questionType:
+        type: string
+        optional: true
+        allowed_values: [current_location, last_seen, disappeared_when, nearby_context, where_to_look]
+        description: Parsed intent; event analysis and exact disappearance time remain outside v1.
+        evidence: [{source: query_schema, pointer: "#/definitions/Query/properties/questionType"}]
+      urgency:
+        type: string
+        optional: true
+        allowed_values: [high, low]
+        evidence: [{source: interviews, participant: 3, question: 8}, {source: interviews, participant: 5, question: 8}]
+      checkedPlaces:
+        type: array
+        items: {type: string}
+        optional: true
+        description: Explicitly searched places, preserving the user's words.
+        evidence: [{source: interviews, participant: 6, question: 5}, {source: interviews, participant: 6, question: 6}, {source: interviews, participant: 10, question: 6}]
+      lastUsedPlace:
+        type: string
+        optional: true
+        description: User's stated memory; not a camera observation.
+        evidence: [{source: interviews, participant: 1, question: 9}, {source: interviews, participant: 6, question: 9}, {source: interviews, participant: 10, question: 9}]
+
   Detection:
-    attributes: [location, timestamp, confidence]
-  Camera:
-    attributes: [cameraId, room]
-  ContextEvent:
-    attributes: [involvedType, timestamp]   # involvedType: person | pet | object
+    kind: solution_design
+    evidence: [{source: design, section: "4.2"}, {source: spike_plan, section: "4. Method"}]
+    attributes:
+      location:
+        type: string
+        allowed_values_ref: vocabulary.places
+        evidence: [{source: design, section: "4.2"}, {source: spike_plan, section: "4. Method"}]
+      timestamp:
+        type: string
+        format: date-time
+        description: Image capture time with timezone.
+        evidence: [{source: design, section: "4.2"}]
+      confidence:
+        type: number
+        range: [0, 1]
+        confirmation_threshold_ref: policy.min_confirmed_confidence
+        comparison_ref: policy.confidence_comparison
+        evidence: [{source: spike_plan, section: "3. Success Criteria"}]
+      visibility:
+        type: string
+        optional: true
+        allowed_values: [visible, partially_occluded, unknown]
+        description: Image-supported visibility; never infer a fully hidden item's location.
+        evidence: [{source: interviews, participant: 2, question: 3}, {source: interviews, participant: 6, question: 9}, {source: interviews, participant: 10, question: 9}, {source: design, decision: "visibility labels model the interview limitation"}]
+
   Response:
-    attributes: [answer, confidenceLevel]
+    kind: interface_design
+    evidence: [{source: design, section: "5"}]
+    attributes:
+      location_or_last_seen:
+        type: object
+        nullable: true
+        fields:
+          location: {type: string, allowed_values_ref: vocabulary.places}
+          timestamp: {type: string, format: date-time}
+          evidence_kind: {type: string, allowed_values: [latest_frame, history]}
+        description: Selected observation's place, capture time, and evidence kind; null without a reliable record.
+        evidence: [{source: design, section: "5"}, {source: design, decision: "typed representation of the existing location_or_last_seen output"}]
+      confidence_level:
+        type: number
+        nullable: true
+        range: [0, 1]
+        description: Selected record's confidence score; null without a selected record.
+        evidence: [{source: design, section: "5"}, {source: spike_plan, section: "3. Success Criteria"}]
+      possibility_suggestion:
+        type: string
+        nullable: true
+        description: Explicitly unconfirmed hint from the user's last-used or usual place; null without supporting context.
+        evidence: [{source: interviews, participant: 1, question: 9}, {source: interviews, participant: 6, question: 9}, {source: interviews, participant: 10, question: 9}, {source: design, decision: "user-memory hints are separate from recorded observations"}]
+      fact_vs_possibility_disclaimer:
+        type: string
+        description: Explain observation time and uncertainty, or ask for clarification when needed.
+        evidence: [{source: design, section: "6.2"}]
 
 relationships:
   - subject: Object
     relation: has
     object: Detection
-    cardinality: 1:many
+    cardinality: "1:0..many"
+    description: One object may have zero or more recorded observations.
+    evidence: [{source: design, section: "4.2"}]
+
+  - subject: Object
+    relation: usuallyAt
+    object: Place
+    cardinality: "0..many:0..1"
+    description: An object may have one explicitly user-provided usual place.
+    evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 5}]
+
   - subject: Query
     relation: asksAbout
     object: Object
+    cardinality: "0..many:0..1"
+    description: Resolve at most one object per Query; ask for clarification if missing or ambiguous.
+    evidence: [{source: query_schema, pointer: "#/definitions/Query/properties/objectName"}, {source: design, section: "6.2"}]
+
   - subject: Detection
-    relation: capturedBy
-    object: Camera
-  - subject: Detection
-    relation: coOccursWith
-    object: ContextEvent
+    relation: observedAt
+    object: Place
+    cardinality: "0..many:1"
+    description: Each detection records one observed place.
+    evidence: [{source: design, section: "4.2"}, {source: spike_plan, section: "4. Method"}]
+
   - subject: Query
     relation: produces
     object: Response
+    cardinality: "1:1"
+    description: Each Query produces one response, including a clarification or safe failure when needed.
+    evidence: [{source: design, section: "5"}]
+
   - subject: Response
     relation: basedOn
     object: Detection
+    cardinality: "0..many:0..1"
+    description: A response uses at most one selected detection; none when no reliable record exists.
+    evidence: [{source: design, section: "6.1"}, {source: design, section: "6.2"}]
 
 reasoning_rules:
-  - Only detections with confidence >= 75% are used.
-  - Search order: current sighting -> historical record -> contextual analysis.
-  - Confirmed detections are stated as fact; ContextEvent-based inferences are
-    stated only as a possibility, with supporting evidence, never as a
-    confirmed cause.
+  - >
+    Resolve the requested object before selecting a detection. Ask for clarification
+    when its name is missing or ambiguous. Distinguish an unsupported item class
+    from a supported item with no reliable record.
+  - >
+    Use only image-supported detections whose confidence satisfies
+    policy.min_confirmed_confidence using policy.confidence_comparison.
+    Partial occlusion still requires sufficient visible evidence to identify the item.
+    Never infer a fully hidden item's location from confidence alone.
+  - >
+    Prefer a qualifying detection from the latest frame available for the query.
+    Otherwise, select the requested object's most recent qualifying historical
+    detection by image capture time. If equally recent records conflict on location,
+    explain the uncertainty instead of choosing arbitrarily.
+  - >
+    Return the selected observation's capture time and evidence kind.
+    Explain that a recorded location does not guarantee the item's current location.
+    A missed detection is not proof that the item is absent from the room.
+  - >
+    checkedPlaces records the user's search history. It does not invalidate a
+    reliable detection or prove that the item is hidden at that place.
+  - >
+    With no reliable detection, location_or_last_seen and confidence_level are null.
+    An unconfirmed possibility_suggestion may use the explicit lastUsedPlace,
+    otherwise the explicitly user-provided usualPlace. Label its user-memory source.
+    Without such context, possibility_suggestion is also null.
+  - >
+    Explain the limitation when asked for an exact disappearance time or nearby
+    events. Return any reliable last-seen record only as recorded evidence.
+    Do not invent events or attribute movement to a person or pet.
 
 output:
-  - location_or_last_seen
-  - confidence_level
-  - possibility_suggestion   # present only when object is not currently visible
-  - fact_vs_possibility_disclaimer
+  fields_ref: entities.Response.attributes
+  rule: Return all four defined fields; use null where the attribute permits it.
