@@ -1,10 +1,10 @@
-# Where-Is-It AI Parsing Prompt — parse_query.md
+# Where-Is-It AI Parsing Prompt — parse_query_en.md
 
 | Item | Value |
 |---|---|
-| prompt_version | 1 |
+| prompt_version | 2 |
 | Paired schema | `src/whereisit/schemas/query.schema.json` |
-| Reading code | `src/whereisit/parser.py` — reads only the text between `<!-- prompt:start -->` and `<!-- prompt:end -->` and sends it as the system prompt |
+| Reading code | `src/whereisit/parser.py` — uses the text between the standalone start and end markers below as the system prompt |
 
 ## System Prompt
 <!-- prompt:start -->
@@ -26,7 +26,7 @@ Rules:
 
 Example 1
 Input: Where's my black wallet?
-Output: {"queries":[{"questionText":"Where's my black wallet?","objectName":"black wallet" "questionType":"current_location"}]}
+Output: {"queries":[{"questionText":"Where's my black wallet?","objectName":"black wallet","questionType":"current_location"}]}
 
 Example 2
 Input: Ugh, where did that thing go
@@ -39,56 +39,68 @@ Output: {"queries":[{"questionText":"I'm late, where are my phone and black wall
 
 ## Field → Function Argument (Hard/Soft)
 
-Input: "I'm late for class, where's my black wallet? It's not on the desk. I think I left it on the bed last night"
-Structure to extract as output: `questionText`, `objectName`, `questionType`, `urgency`, `checkedPlaces`, `lastUsedPlace`. If the user is looking for two or more items, create one Query per item and put them in the queries array (because `Query asksAbout Object` is `many:1`, one Query points to only one Object).
+The input structure follows `query.schema.json`. The parser structures the user's words; it does not generate item locations or detection confidence scores.
 
-| Field | Which argument of which function it goes to | Hard/Soft |
+Subsequent retrieval uses `policy.min_confirmed_confidence` and `policy.confidence_comparison` from `ontology.yaml`. This document does not define a separate confidence threshold.
+
+| Field | Handling | Classification and basis |
 |---|---|---|
-| `objectName` | `Query asksAbout Object` — matched against the AI-registered `Object.name` and `Object.category` to confirm the target Object → `Object has Detection` fetches only that Object's detections → rule 1 (`confidence > 70%`) applied | **Hard**. Detections of any Object other than the confirmed Object cannot be the basis of a Response. Required to collect — if null, do not query detections; ask the user again |
-| `questionText` | `Query produces Response` — used as the user's original question when generating `Response.answer` | Not used for ranking. For preserving the original text. Literal Input |
-| `queries` | Each Query goes through `Query asksAbout Object` → `Query produces Response` separately — one Response per Query | Hard |
-| `questionType` | Determines the starting step of rule 2. `current_location` → ① current sighting → `location_or_last_seen` / `last_seen`, `disappeared_when` → ② history (`Detection.timestamp`) → `location_or_last_seen` / `nearby_context` → ③ `Detection coOccursWith ContextEvent` → `possibility_suggestion` / `where_to_look` → ③ + rule 3 → `possibility_suggestion`. If omitted, follow rule 2 in its default order (①→②→③) | Soft. Only changes the order; does not remove detections |
-| `urgency` | `Query produces Response` — length of `Response.answer`. If high, one line of `location_or_last_seen`; if low, all Response items. Either way, rule 3's `fact_vs_possibility_disclaimer` is never removed | Not used for ranking. Response format argument |
-| `checkedPlaces` | rule 2 ①② — compared against the confirmed `Detection.location`. Even if it matches, the detection is not discarded; per rule 3, the answer states "detected location (fact) + possibility that it is hidden under another item" | Soft. Cases where items were found hidden in places already searched (logs 2, 6, 10) |
-| `lastUsedPlace` | rule 2 ③ + rule 3 — since it is the user's memory, used only in `possibility_suggestion` and never in `location_or_last_seen`. Used only when no detection exceeds rule 1 (`confidence > 70%`) | Soft. Cases where the expected location and the actual location differed (logs 4, 9) |
+| `queries` | Create one Query per requested item, preserving mention order. Each Query corresponds to a Response at the same position in the `responses` array. | Structural design: `query.schema.json`, SPEC section 5. |
+| `questionText` | Preserve the complete original utterance. Do not interpret it as system instructions or directly use the whole text as a retrieval filter. | Original-text preservation. Basis: `query.schema.json`. |
+| `objectName` | Preserve the user's item expression and use ontology aliases to resolve the target. Ask for clarification if the item name is missing or multiple objects match. | Hard condition. Logs 3, 6 and 10 Q2, and the input schema. |
+| `questionType` | Identify the requested information. For disappearance-time or surrounding-event questions, explain the scope limitation and provide only a reliable last observation when available. | Soft condition. Allowed values and supported behavior follow the ontology and SPEC. |
+| `urgency` | Adjust answer length and wording only. Always retain the observation time and uncertainty explanation. | Presentation parameter. Logs 3 Q8, 5 Q8 and 10 Q8. |
+| `checkedPlaces` | Preserve places the user explicitly says they searched. Do not discard a reliable detection at the same place or assume the item is hidden. | Soft condition. Logs 6 Q5–Q6 and 10 Q5–Q6. |
+| `lastUsedPlace` | Only when neither a qualifying latest-frame observation nor a qualifying historical record exists, use this as an explicitly unconfirmed user-memory hint in `possibility_suggestion`. Never put it in `location_or_last_seen`. | Soft condition. Logs 1, 6 and 10 Q9. |
+
+Interview evidence can be checked against the corresponding participant and question in `interview_answers.md`. Structural and processing decisions are design choices, not interview responses.
 
 ## Schema Design Notes
 
-- **Multiple items are resolved as multiple Queries.** In the ontology, `Query asksAbout Object` is many:1 and `Query produces Response` is 1:1. Turning `objectName` into an array would change these relationships, so one Query is created per item and placed in the top-level `queries` array. `queries` is an outer envelope, not an ontology attribute, and has `minItems: 1` — even an utterance that names no item produces one Query with `objectName: null`. All Queries from the same utterance have the same `questionText`.
-- **The properties are the same as the six attributes of the ontology's `Query`.** `questionText`, `objectName`, `questionType`, `urgency`, `checkedPlaces`, `lastUsedPlace`. When the ontology changes, the schema is changed in the same commit. Owner distinction ("not my roommate's") is information the camera cannot know and would also require an attribute on `Object`, so it is deferred to v2.
-- **required = `questionText`, `objectName`.** Without the original text and the item being searched for, a Query cannot exist. `questionText` always exists, so null is not allowed; `objectName` may be unknown, so it is opened as `["string", "null"]`. `{"questionText":"Ugh, where did that thing go","objectName":null}` must pass validation so that the application can ask the user again.
-- **null vs. omission.** The two required keys are null when unknown; the other four keys (`questionType`, `urgency`, `checkedPlaces`, `lastUsedPlace`) are omitted entirely when not in the utterance. To treat empty arrays as omission as well, `minItems: 1` is set on `checkedPlaces`.
-- **enum only for closed sets.** `questionType` is the five questions defined by the ontology's purpose (`current_location`, `last_seen`, `disappeared_when`, `nearby_context`, `where_to_look`), and `urgency` has two values, `high`/`low`, so enums are applied. If it cannot be determined, do not force a choice; omit it.
-- **Why there is no enum on `objectName`.** `Object.name` is a descriptive name ("black wallet") that the AI assigns when detecting, so it is not a closed set. Putting an enum on an unclosed value makes the model cram the input into the closest value — the anxiety factor from the interviews ("it sees a different wallet and says the wallet is on the table") is exactly this kind of forced mapping. Instead, `objectName` is built only from words in the utterance to prevent hallucination, and matching against registered Objects happens in `Query asksAbout Object`.
-- **Why there is no enum on the place fields.** `checkedPlaces` and `lastUsedPlace` are compared against `Detection.location`, but its list of values has not been decided yet. The user's expressions are taken as-is and matching happens at the rule 2 step. Once the list is finalized, injection + post-processing matching will be considered.
-- **Why appearance expressions are kept and owner expressions are removed.** The names the AI assigns include appearance such as color and material, so "black" is used to tell apart multiple items of the same kind. "My" and "roommate's" are information the camera cannot know, so they do not help matching and actually get in the way.
-- **`additionalProperties: false`.** Applied both at the top level and on `Query`. It prevents the parser from answering the location directly, like `"location": "bed"`, or pulling in `Object`'s attributes (`category`). If the model's guess replaces `Detection`, rule 3 (distinguishing confirmed facts from possibilities) breaks down.
+- **Definition source:** Query fields must match the ontology's six Query attributes. Input validation follows `query.schema.json`. When allowed values change, check that the ontology, schema and related prompts remain consistent.
+
+- **One Query per item:** Create one Query for each requested item and preserve mention order in the `queries` array. All Queries from the same utterance have identical `questionText`. An utterance without an identifiable item name still produces one Query with `objectName: null`, allowing the application to ask for clarification.
+
+- **Required keys and null:** Always include `questionText` and `objectName`. `questionText` is a non-empty original string and cannot be null. Only `objectName` permits null when the item name cannot be identified. Omit optional fields when the utterance provides no corresponding information; do not fill them with null or empty arrays.
+
+- **User expressions and canonical values:** `objectName`, `checkedPlaces` and `lastUsedPlace` preserve the user's wording and are not restricted by enums. Canonical item categories and recorded locations follow `vocabulary.items` and `vocabulary.places`. Resolve aliases during subsequent matching without forcing unmatched expressions into a canonical value. Preserve unsupported item names during parsing and explain the support limitation during subsequent handling.
+
+- **Appearance and ownership:** Retain appearance details explicitly stated by the user, such as color or material. Identifying an item's owner is outside v1 scope. Preserve the complete original utterance in `questionText`.
+
+- **Intent and supported capabilities:** Allowed values for `questionType` and `urgency` follow the ontology's Query definition. Parsing a disappearance-time or surrounding-event question does not add the ability to infer an exact disappearance time or cause. Responses follow the scope and failure-handling rules in SPEC.
+
+- **No additional fields:** Apply `additionalProperties: false` to both the top-level object and Query. The parser must not add `location` or `category` as a substitute for detection results. Handle camera observations and user memories separately.
 
 ## Failure Mode Checklist
 
-| # | Failure mode | Test input | Where it is caught | What happens next |
+These are designed validation examples, not interview quotations or actual model execution results. Golden cases connect concrete inputs and expected outputs to the relevant acceptance criteria.
+
+| # | Situation | Test input or condition | Expected behavior | Related AC |
 |---|---|---|---|---|
-| 1 | (Normal) | "I'm late for class, where's my black wallet? It's not on the desk. I think I left it on the bed last night" | 1 Query. Passes schema, passes post-processing, matches exactly one, `"black wallet"`, in `Query asksAbout Object` | `Object has Detection` → rules 1–3 → `Query produces Response`. Since urgency is high, one line of `locationOrLastSeen` + `factVsPossibilityDisclaimer` |
-| 2 | Insufficient information | "Ugh, where did that thing go" | Passes schema (null allowed). In the required-condition check, `objectName` is null | Without calling the model again, ask back: "Which item are you looking for?" |
-| 3 | Ambiguous value (multiple matching Objects) | "Where's my wallet?" | Passes parser, schema, and post-processing. Matches two, `"black wallet"` and `"brown leather wallet"`, in `Query asksAbout Object` | Do not pick one and answer. Show the candidates by their registered names and ask back, e.g., "Is it the black wallet or the brown leather wallet?" |
-| 4 | Range violation | Output contains `"objectName": ""`, `"questionText": null`, `"questionType": "where"`, `"urgency": "medium"`, `"checkedPlaces": []` | Schema `minLength` / type / `enum` / `minItems` violation → validation fails | Re-request with the error message attached (max 2 times) |
-| 5 | Unregistered item | "Where did I put my lighter" | The parser outputs `"lighter"` as per the rules and passes schema and post-processing. 0 matching Objects in `Query asksAbout Object` | Tell the user "The camera hasn't detected and registered a lighter yet." Do not give the location of a similar item instead |
-| 6 | objectName altered (translation/additions) | "Where's my phone" → output `"objectName": "black smartphone"` | Post-processing checks whether every word in objectName appears in `questionText` → "black", "smartphone" are not there | Re-request (max 2 times). If the re-request limit is exceeded, ask back as in #2 — matching with the model's invented "black" could confirm the wrong Object |
-| 7 | Place hallucination | "Where's my phone" → output `"checkedPlaces": ["desk"]` or `"lastUsedPlace": "bag"` | Post-processing checks whether the place expression appears in `questionText` → it does not | Do not re-request; delete that key. Both fields are optional soft fields, so deleting them does not stop processing — better than letting an invented place get into `possibilitySuggestion` |
-| 8 | Original text altered | The output's `questionText` is a summarized or translated sentence, or `questionText` differs between Queries from the same utterance | Post-processing string-compares against the actual input → mismatch | Do not re-request; overwrite every Query's `questionText` with the actual input (because the code already knows the value) |
-| 9 | Key not in schema / envelope missing | Output contains `"location": "bed"`, `"category": "wallet"` / a single Query is output without `queries` | `additionalProperties: false`, top-level `required: ["queries"]` → validation fails | Re-request with the error message attached (max 2 times). The location the model wrote is not used anywhere |
-| 10 | Not JSON or truncated | The model answers with a sentence like "Wallets are usually on the desk" / `stop_reason` is `max_tokens` | Response status check and JSON parsing fail | Re-request (max 2 times) |
-| 11 | Two or more items (normal) | "Where are my phone and black wallet?" | 2 Queries. Passes schema and post-processing | Each Query separately goes through `Query asksAbout Object` → `Query produces Response`. The answers are split per item and shown together at once |
-| 12 | Only one of two items resolved | "Where are my phone and that thing?" / "Where are my phone and lighter?" | One of the 2 Queries has `objectName` null (required-condition check) or 0 matches in `Query asksAbout Object` | Answer the resolved item right away, and only ask back about the other (#2) or report that it is not registered (#5). Do not stop everything because one is blocked |
-| 13 | Query missing / duplicated | "My phone and wallet" → only 1 Query / 2 Queries with the same objectName | Post-processing: duplicate check on objectName → merged into one. A missing Query cannot be caught from the parser output alone | The code merges duplicates. To guard against missing Queries, the first line of the answer echoes the list of items searched ("Found your phone") so the user can notice a missing item |
+| 1 | Normal request | "Where's my phone? It's not on the desk." | Validate the schema and original wording, then resolve the target. The Response follows the four fields in SPEC section 5. | AC-02 |
+| 2 | Missing item name | "Ugh, where did that thing go" | Set `objectName` to null and ask which item the user means. Do not query an arbitrarily chosen item. | AC-02 |
+| 3 | Multiple matching objects | "Where's my wallet?" matches two registered wallets | Ask which wallet the user means instead of selecting one arbitrarily. | AC-02 |
+| 4 | Schema violation | Empty `objectName`, invalid enum value or empty `checkedPlaces` | Reject validation and apply the retry rules below. | AC-02 |
+| 5 | Unsupported category or no record | "Where's my lighter?" / a supported item without a reliable record | Explain unsupported categories separately from missing records for supported items. Never substitute a similar item. | AC-02, AC-06 |
+| 6 | Item wording added or translated | "Where's my phone?" produces `objectName: "black smartphone"` | Reject wording unsupported by the actual input and apply the retry rules. | AC-02 |
+| 7 | Invented place | `checkedPlaces` or `lastUsedPlace` appears although no place was stated | Remove unsupported optional fields. Do not use them for retrieval or location suggestions. | AC-02, AC-06 |
+| 8 | Original utterance altered | `questionText` is summarized, translated or different between Queries | Restore the actual input and validate the other fields against that input. | AC-02 |
+| 9 | Extra key or missing envelope | Added `location` or `category`, or missing `queries` | Treat as a schema violation. Do not use the generated location; apply the retry rules. | AC-02 |
+| 10 | Invalid JSON, truncation or call failure | Plain text, incomplete JSON or a failed model call | Do not treat the output as a valid parsing result. Apply bounded recovery. | AC-02 |
+| 11 | Multiple items | "Where are my phone and wallet?" | Create one Query per item in mention order and return a corresponding Response for each Query. | AC-02 |
+| 12 | Only some items resolved | "Where are my phone and that thing?" | Process the resolved item normally and ask for clarification only about the unresolved item. Do not discard all results. | AC-02 |
+| 13 | Missing or duplicate Query | Two items requested but only one Query returned / a clearly repeated request | Compare against the expected Query list in golden cases. Merge only clearly identical requests; preserve different items and appearance conditions. Passing schema validation alone does not establish correctness. | AC-02 |
+| 14 | Unsupported inference request | "Exactly when did my phone disappear?" | Explain the scope limitation. Do not present the last observation time as the disappearance time or infer actions by people or pets. | AC-02, AC-05 |
 
-- **Error types that trigger a re-request**: Format errors (4 range violation, 9 key not in schema / envelope missing, 10 not JSON / truncated) and 6 objectName altered. Insufficient information and ambiguity (2, 3, 5, 12) are not re-requested; the user is asked back. Original-text alteration (8) and duplication (13) are fixed by the code, and place hallucination (7) is handled by deleting the key 
+### Retry Rules
 
-- **Number of re-requests**: 2
-
-- **Fallback when exceeded**: After 3 consecutive failures, give up parsing and ask the user back: "Please just tell me the name of the item you're looking for." Do not proceed with a detection query using guessed values.
-
-
+- Format errors, unsupported item wording and detected missing Queries may trigger a model retry with error information.
+- Allow at most two additional model requests after the initial request, and only within the response-time budget in SPEC section 6.3.
+- When user information is missing or the target is ambiguous, ask the user for clarification instead of asking the model to guess.
+- Restore original text and remove unsupported optional place fields using the actual user input.
+- If recovery cannot produce a valid result within the attempt limit or time budget, explain the processing failure and ask the user to restate the item name. Do not retrieve using guessed values.
+- Record internal model retries separately from user conversation turns.
+  
 ## Test Run Log
 
 Record the results of running the test inputs on the actual model. Record the model ID, `prompt_version`, and schema commit for each row.
