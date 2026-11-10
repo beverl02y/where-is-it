@@ -1,6 +1,17 @@
 project: Where-Is-It AI
-version: mini-ontology
+version: mini-ontology v2
 
+change_history:
+  - version: mini-ontology (v1)
+    summary: One room, one camera; structured Query and four-field Response.
+  - version: mini-ontology v2
+    summary: >
+      For SPEC_v2. Added Room and Zone; any recorded item can be searched;
+      usual places and hiding places modelled from the interviews; every attribute
+      typed with closed values where the value set is fixed;
+      below-threshold records only as labelled possibilities; retention policy added;
+      structured Query fields, usualPlace, visibility and per-room time zone deferred.
+      
 vocabulary:
   items:
     - glasses
@@ -23,6 +34,8 @@ vocabulary:
     - under_table
     - held_by_person
     - other
+
+  hiding_places: [bag, drawer, cupboard, under_table]
 
   item_aliases:
     glasses: [안경]
@@ -51,11 +64,16 @@ vocabulary:
     - Prefer the longest matching phrase, so card wallet maps to wallet rather than card.
     - Preserve appearance and relative-location details; ask if the object remains ambiguous.
     - desk and table remain distinct place values.
+    - Zone names should use canonical place names where possible.
+    - under_table and held_by_person cannot be drawn as zones; they are taken only from the
+      detector's place description.
 
+      
 policy:
   min_confirmed_confidence: 0.75
   confidence_comparison: ">="
-
+  retention_days: 30
+  
 evidence_sources:
   interviews:
     file: interview_answers.md
@@ -66,7 +84,7 @@ evidence_sources:
     kind: technical_test_design
 
   design:
-    file: SPEC.md
+    file: SPEC_v2.md
     kind: solution_design
 
   query_schema:
@@ -78,7 +96,8 @@ validation_scope:
     item_subset: [glasses, wallet, card, earphones, phone, hairtie]
     place_subset: [table, under_table, sofa, held_by_person]
     evidence_source: spike_plan
-    limitation: Historical results apply only to this subset and the evaluated images.
+    limitation: Historical results apply only to this subset and the evaluated images, and were
+      obtained with an earlier detector. The v2 benchmark must cover all seven items.
 
 purpose:
   en: >
@@ -97,197 +116,328 @@ purpose:
     탐지할 수 있으며, 마지막 기록 위치가 현재 위치를 보장하지는 않는다.
 
 entities:
+  Room:
+    kind: solution_design
+    description: >
+      One camera phone and everything recorded from it. Each room's records
+      are private to that room.
+    evidence: [{source: design, section: "3"}, {source: design, section: "4.2 #10"}, {source: design, section: "5.4"}]
+    attributes:
+      id:
+        type: string
+        description: Short public camera ID, used with the PIN to connect the owner's phone.
+        evidence: [{source: design, section: "5.4"}]
+      name:
+        type: string
+        description: Room name chosen when the camera is set up.
+        evidence: [{source: design, section: "5.4"}]
+      last_photo_at:
+        type: string
+        format: date-time
+        nullable: true
+        description: Capture time of the latest photo; null before the first photo.
+        evidence: [{source: design, section: "6.2"}]
+      interval_s:
+        type: integer
+        nullable: true
+        description: How often the camera sends photos; widens the current-view window.
+        evidence: [{source: design, section: "4.2 #4"}]
+
+  Zone:
+    kind: solution_design
+    description: Optional named area drawn by the owner on the room's camera view.
+    evidence: [{source: design, section: "4.2 #2"}, {source: design, section: "AC-10"}]
+    attributes:
+      name:
+        type: string
+        description: Should be a canonical place name (vocabulary.places) where possible.
+      label:
+        type: string
+        description: Phrase used in answers, e.g. "on the desk".
+      polygon:
+        type: array
+        description: Points normalised to the camera picture.
+
   Object:
     evidence: [{source: interviews, participant: 3, question: 3}, {source: interviews, participant: 10, question: 3}]
     attributes:
-      name:
-        type: string
-        description: Descriptive item name, such as black wallet.
-        evidence: [{source: interviews, participant: 6, question: 2}, {source: design, section: "5"}]
       category:
         type: string
         allowed_values_ref: vocabulary.items
-        evidence: [{source: interviews, participant: 3, question: 2}, {source: interviews, participant: 6, question: 2}, {source: interviews, participant: 7, question: 2}, {source: interviews, participant: 10, question: 2}]
-      usualPlace:
+        extra_values: [other]
+        description: One of the key items, or other for any other portable item.
+        evidence: [{source: interviews, participant: 3, question: 2}, {source: interviews, participant: 6, question: 2}, {source: interviews, participant: 7, question: 2}, {source: interviews, participant: 10, question: 2}, {source: design, section: "4.3"}]
+      name:
         type: string
-        nullable: true
-        allowed_values_ref: vocabulary.places
-        description: Explicitly user-provided usual place; null when unknown.
-        evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 5}]
+        description: >
+          Short everyday item name, such as wallet or water bottle. Different
+          names for the same kind of item are saved under one name.
+        evidence: [{source: interviews, participant: 6, question: 2}, {source: design, section: "4.3"}]
+      usualPlaces:
+        type: array
+        items: {type: string, allowed_values_ref: vocabulary.places}
+        derived: true
+        description: >
+          Places where this room's camera has most often confirmed the item,
+          most frequent first. Derived from confirmed detections, never stated as
+          the current location. Used for "where should I look first" answers.
+        evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 5}, {source: design, section: "3"}]
 
   Place:
-    evidence: [{source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 6}]
+    description: >
+      A canonical place in the room. Interviewees named bag (log 1 Q5), table
+      (log 6 Q5), desk (log 10 Q5), and bed, bedside table and bag (log 10 Q6).
+    evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 5}, {source: interviews, participant: 6, question: 6}, {source: interviews, participant: 10, question: 6}]
     attributes:
       name:
         type: string
         allowed_values_ref: vocabulary.places
-        evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 2, question: 6}, {source: interviews, participant: 4, question: 5}, {source: interviews, participant: 10, question: 5}, {source: interviews, participant: 10, question: 6}, {source: spike_plan, section: "4. Method"}, {source: design, decision: "other is a fallback place label"}]
+        evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 5}, {source: interviews, participant: 6, question: 6}, {source: interviews, participant: 10, question: 6}, {source: spike_plan, section: "4. Method"}, {source: design, decision: "other is a fallback place label"}]
+      hidesItems:
+        type: boolean
+        derived: true
+        description: >
+          True when name is in vocabulary.hiding_places. An item there may be
+          invisible to the camera, so a missed detection is not evidence of absence.
+        evidence: [{source: interviews, participant: 2, question: 3}, {source: interviews, participant: 6, question: 9}, {source: interviews, participant: 10, question: 9}]
 
   Query:
     kind: interaction_design
-    evidence: [{source: query_schema, pointer: "#/definitions/Query"}]
+    evidence: [{source: design, section: "5.1"}, {source: parser_design, section: "2.2"}]
     attributes:
       questionText:
         type: string
-        description: Exact original utterance; always required.
-        evidence: [{source: query_schema, pointer: "#/definitions/Query/properties/questionText"}]
+        description: Exact original utterance; always required. Length limit in SPEC_v2 Section 5.1.
+        evidence: [{source: design, section: "5.1"}]
       objectName:
         type: string
         nullable: true
-        description: Exact item phrase; required key, null if no item is identifiable.
-        evidence: [{source: interviews, participant: 3, question: 2}, {source: query_schema, pointer: "#/definitions/Query/properties/objectName"}]
-      questionType:
-        type: string
-        optional: true
-        allowed_values: [current_location, last_seen, disappeared_when, nearby_context, where_to_look]
-        description: Parsed intent; event analysis and exact disappearance time remain outside v1.
-        evidence: [{source: query_schema, pointer: "#/definitions/Query/properties/questionType"}]
-      urgency:
-        type: string
-        optional: true
-        allowed_values: [high, low]
-        evidence: [{source: interviews, participant: 3, question: 8}, {source: interviews, participant: 5, question: 8}]
-      checkedPlaces:
+        description: >
+          The one item phrase the question asks about; null if no item is
+          identifiable.
+        evidence: [{source: interviews, participant: 3, question: 2}, {source: design, section: "5.1"}]
+      descriptors:
         type: array
         items: {type: string}
         optional: true
-        description: Explicitly searched places, preserving the user's words.
-        evidence: [{source: interviews, participant: 6, question: 5}, {source: interviews, participant: 6, question: 6}, {source: interviews, participant: 10, question: 6}]
-      lastUsedPlace:
+        description: Colour, size and shape words from the question, e.g. black, big.
+        evidence: [{source: design, section: "4.2 #8"}, {source: design, section: "5.1"}]
+      lang:
         type: string
+        allowed_values: [en, ko]
+        description: Language of the question; the answer uses the same language.
+        evidence: [{source: design, section: "AC-13"}]
+      limitationRequest:
+        type: boolean
         optional: true
-        description: User's stated memory; not a camera observation.
-        evidence: [{source: interviews, participant: 1, question: 9}, {source: interviews, participant: 6, question: 9}, {source: interviews, participant: 10, question: 9}]
+        description: >
+          True when the question asks for an exact disappearance time or for who
+          or what moved the item.
+        evidence: [{source: design, section: "5.1"}, {source: design, section: "6.2"}]
 
   Detection:
     kind: solution_design
-    evidence: [{source: design, section: "4.2"}, {source: spike_plan, section: "4. Method"}]
+    evidence: [{source: design, section: "4.2 #1"}, {source: design, section: "4.2 #2"}, {source: spike_plan, section: "4. Method"}]
     attributes:
       location:
         type: string
+        description: >
+          Chosen in this order: the room's zone containing the object; the
+          detector's place description (e.g. "on the desk next to the laptop");
+          the position in the camera picture. Shown to the user as written.
+        evidence: [{source: design, section: "4.2 #2"}, {source: spike_plan, section: "4. Method"}]
+      place:
+        type: string
         allowed_values_ref: vocabulary.places
-        evidence: [{source: design, section: "4.2"}, {source: spike_plan, section: "4. Method"}]
+        derived: true
+        description: >
+          Canonical place for location: the zone name, or the first place alias
+          found in the place description; other when nothing matches.
+        evidence: [{source: design, section: "4.2 #2"}, {source: design, section: "4.3"}]
       timestamp:
         type: string
         format: date-time
         description: Image capture time with timezone.
-        evidence: [{source: design, section: "4.2"}]
+        evidence: [{source: design, section: "4.2 #2"}]
       confidence:
         type: number
         range: [0, 1]
         confirmation_threshold_ref: policy.min_confirmed_confidence
         comparison_ref: policy.confidence_comparison
-        evidence: [{source: spike_plan, section: "3. Success Criteria"}]
-      visibility:
-        type: string
+        description: Never shown as 1.0 (100%).
+        evidence: [{source: spike_plan, section: "3. Success Criteria"}, {source: design, section: "4.2 #6"}]
+      appearance:
+        type: object
         optional: true
-        allowed_values: [visible, partially_occluded, unknown]
-        description: Image-supported visibility; never infer a fully hidden item's location.
-        evidence: [{source: interviews, participant: 2, question: 3}, {source: interviews, participant: 6, question: 9}, {source: interviews, participant: 10, question: 9}, {source: design, decision: "visibility labels model the interview limitation"}]
+        fields: {appearance: string, color: string, size: string, shape: string}
+        description: Detector's description, used to tell items of the same kind apart.
+        evidence: [{source: design, section: "4.2 #8"}]
 
   Response:
     kind: interface_design
-    evidence: [{source: design, section: "5"}]
+    evidence: [{source: design, section: "5.2"}]
     attributes:
-      location_or_last_seen:
-        type: object
+      status:
+        type: string
+        allowed_values: [current, last_seen, possible, not_found, clarify, unsupported]
+        evidence: [{source: design, section: "5.2"}]
+      message:
+        type: string
+        description: >
+          The answer shown to the user. States place, time and confidence,
+          explains observation limits or missing evidence, or asks for
+          clarification.
+        evidence: [{source: design, section: "5.2"}, {source: design, section: "6.2"}]
+      object:
+        type: string
         nullable: true
-        fields:
-          location: {type: string, allowed_values_ref: vocabulary.places}
-          timestamp: {type: string, format: date-time}
-          evidence_kind: {type: string, allowed_values: [latest_frame, history]}
-        description: Selected observation's place, capture time, and evidence kind; null without a reliable record.
-        evidence: [{source: design, section: "5"}, {source: design, decision: "typed representation of the existing location_or_last_seen output"}]
-      confidence_level:
+      location:
+        type: string
+        nullable: true
+        description: Place of the selected record; null without a selected record.
+        evidence: [{source: design, section: "5.2"}]
+      seen_at:
+        type: string
+        format: date-time
+        nullable: true
+        description: Capture time of the selected record.
+        evidence: [{source: design, section: "5.2"}]
+      confidence:
         type: number
         nullable: true
         range: [0, 1]
         description: Selected record's confidence score; null without a selected record.
-        evidence: [{source: design, section: "5"}, {source: spike_plan, section: "3. Success Criteria"}]
-      possibility_suggestion:
+        evidence: [{source: design, section: "5.2"}, {source: spike_plan, section: "3. Success Criteria"}]
+      confirmed:
+        type: boolean
+        description: True only when the selected record satisfies the confidence policy.
+        evidence: [{source: design, section: "5.2"}]
+      suggestion:
         type: string
         nullable: true
-        description: Explicitly unconfirmed hint from the user's last-used or usual place; null without supporting context.
-        evidence: [{source: interviews, participant: 1, question: 9}, {source: interviews, participant: 6, question: 9}, {source: interviews, participant: 10, question: 9}, {source: design, decision: "user-memory hints are separate from recorded observations"}]
-      fact_vs_possibility_disclaimer:
+        description: >
+          Explicitly unconfirmed possibility from a below-threshold detection;
+          null when there is none.
+        evidence: [{source: design, section: "4.2 #6"}, {source: design, section: "AC-06"}]
+      source:
         type: string
-        description: Explain observation time and uncertainty, or ask for clarification when needed.
-        evidence: [{source: design, section: "6.2"}]
+        allowed_values: [rules, rag]
+        description: Whether the rule search or the question fallback produced the answer.
+        evidence: [{source: design, section: "4.2 #9"}]
+      lang:
+        type: string
+        allowed_values: [en, ko]
+        evidence: [{source: design, section: "AC-13"}]
 
 relationships:
+  - subject: Room
+    relation: has
+    object: Detection
+    cardinality: "1:0..many"
+    description: Every detection belongs to exactly one room.
+    evidence: [{source: design, section: "4.2 #10"}]
+
+  - subject: Room
+    relation: has
+    object: Zone
+    cardinality: "1:0..many"
+    description: Zones belong to one room and apply only to that room's photos.
+    evidence: [{source: design, section: "AC-10"}]
+
   - subject: Object
     relation: has
     object: Detection
     cardinality: "1:0..many"
     description: One object may have zero or more recorded observations.
-    evidence: [{source: design, section: "4.2"}]
+    evidence: [{source: design, section: "4.2 #2"}]
 
-  - subject: Object
-    relation: usuallyAt
-    object: Place
-    cardinality: "0..many:0..1"
-    description: An object may have one explicitly user-provided usual place.
-    evidence: [{source: interviews, participant: 1, question: 5}, {source: interviews, participant: 6, question: 5}, {source: interviews, participant: 10, question: 5}]
+  - subject: Query
+    relation: askedIn
+    object: Room
+    cardinality: "0..many:1"
+    description: A query is answered only from the room whose key was used.
+    evidence: [{source: design, section: "AC-09"}]
 
   - subject: Query
     relation: asksAbout
     object: Object
     cardinality: "0..many:0..1"
     description: Resolve at most one object per Query; ask for clarification if missing or ambiguous.
-    evidence: [{source: query_schema, pointer: "#/definitions/Query/properties/objectName"}, {source: design, section: "6.2"}]
+    evidence: [{source: design, section: "5.1"}, {source: design, section: "6.2"}]
 
   - subject: Detection
     relation: observedAt
     object: Place
-    cardinality: "0..many:1"
-    description: Each detection records one observed place.
-    evidence: [{source: design, section: "4.2"}, {source: spike_plan, section: "4. Method"}]
+    cardinality: "0..many:0..1"
+    description: A detection's location maps to at most one canonical place.
+    evidence: [{source: design, section: "4.2 #2"}, {source: spike_plan, section: "4. Method"}]
 
   - subject: Query
     relation: produces
     object: Response
     cardinality: "1:1"
     description: Each Query produces one response, including a clarification or safe failure when needed.
-    evidence: [{source: design, section: "5"}]
+    evidence: [{source: design, section: "5.2"}]
 
   - subject: Response
     relation: basedOn
     object: Detection
-    cardinality: "0..many:0..1"
-    description: A response uses at most one selected detection; none when no reliable record exists.
-    evidence: [{source: design, section: "6.1"}, {source: design, section: "6.2"}]
+    cardinality: "0..many:0..many"
+    description: >
+      Usually one selected detection; several when items of the same kind are
+      listed; none when no usable record exists.
+    evidence: [{source: design, section: "4.2 #8"}, {source: design, section: "6.2"}]
 
 reasoning_rules:
   - >
-    Resolve the requested object before selecting a detection. Ask for clarification
-    when its name is missing or ambiguous. Distinguish an unsupported item class
-    from a supported item with no reliable record.
+    Search only the asking room's records. Never use or mention another room's
+    detections, zones or photos.
   - >
-    Use only image-supported detections whose confidence satisfies
+    Resolve the requested object before selecting a detection. Ask for clarification
+    when its name is missing or ambiguous. An item never recorded in the room receives
+    a no-record response; never substitute a similar item.
+  - >
+    State a location as fact only for detections whose confidence satisfies
     policy.min_confirmed_confidence using policy.confidence_comparison.
     Partial occlusion still requires sufficient visible evidence to identify the item.
     Never infer a fully hidden item's location from confidence alone.
   - >
-    Prefer a qualifying detection from the latest frame available for the query.
-    Otherwise, select the requested object's most recent qualifying historical
-    detection by image capture time. If equally recent records conflict on location,
-    explain the uncertainty instead of choosing arbitrarily.
+    Prefer a qualifying detection from the room's latest photo when that photo is
+    within the current-view window. Otherwise, select the object's most recent
+    qualifying historical detection by image capture time. If several items of the
+    same kind qualify, list each with its appearance and place and ask which one is
+    the user's instead of choosing arbitrarily.
   - >
-    Return the selected observation's capture time and evidence kind.
+    Return the selected observation's capture time and confidence, never as 100%.
     Explain that a recorded location does not guarantee the item's current location.
     A missed detection is not proof that the item is absent from the room.
   - >
-    checkedPlaces records the user's search history. It does not invalidate a
-    reliable detection or prove that the item is hidden at that place.
+    A below-threshold detection newer than the last confirmed one may be offered
+    only as a labelled, unconfirmed suggestion (status possible, confirmed false).
+    With no record at all, location and confidence are null.
   - >
-    With no reliable detection, location_or_last_seen and confidence_level are null.
-    An unconfirmed possibility_suggestion may use the explicit lastUsedPlace,
-    otherwise the explicitly user-provided usualPlace. Label its user-memory source.
-    Without such context, possibility_suggestion is also null.
+    With no confirmed record, explain that the item may be in a place where
+    Place.hidesItems is true (inside a bag, drawer or cupboard, or under
+    something) or outside the camera's view. Never treat a missed detection
+    as proof that the item is absent.
+  - >
+    For "where should I look first" questions, offer the item's usualPlaces as
+    places to check, labelled as past patterns, not as its current location.
+  - >
+    If the room has not received any photo, say so. If the latest photo is older than
+    the current-view window, say the camera has not sent a recent image and answer
+    from history.
+  - >
+    The question fallback answers only from the room's recent records, must cite the
+    records it used, and must satisfy the same confidence rules. If it fails any check,
+    return the rule-based answer.
   - >
     Explain the limitation when asked for an exact disappearance time or nearby
     events. Return any reliable last-seen record only as recorded evidence.
     Do not invent events or attribute movement to a person or pet.
+  - >
+    Delete detections older than policy.retention_days. Photos are analysed and
+    then discarded; only detection fields are kept.
 
 output:
   fields_ref: entities.Response.attributes
