@@ -286,7 +286,7 @@ These criteria use event-driven EARS wording: WHEN a condition occurs, the syste
 
 Planned test basis:
 
-- Vision evaluation: 20 frozen images × seven key item classes = 140 photo-item pairs, taken with the test camera. Include visible and not-visible examples for every class. Two human labelers resolve disagreements before evaluation.
+- Vision evaluation: 20 frozen images × six key item classes = 120 photo-item pairs, taken with the test camera. Include visible and not-visible examples for every class. Two human labelers resolve disagreements before evaluation.
 - Freeze the images, labels, model and its settings, prompt, confidence policy, and scoring rules before the run.
 - The historical six-class spike remains a separate 120-pair evaluation.
 - Parser, retrieval and isolation tests use concrete inputs and expected results in the planned `eval/golden_cases.yaml` and automated tests.
