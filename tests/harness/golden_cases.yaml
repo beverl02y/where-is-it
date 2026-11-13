@@ -1,85 +1,57 @@
 # Where-Is-It AI: four starter golden cases
 # All records are synthetic examples based on SPEC v1, not real camera measurements.
 # Scope: historical-record selection only; a sighting does not prove the current location.
-# Format: name + context + expect_* / must_* conditions + note (AC basis).
 
-schema_version: 1
-project: Where-Is-It AI
-feature: find_last_seen
-status: draft_for_team_review
-fixture_data: synthetic
-minimum_confirmed_confidence: 0.75
-source_spec: https://chatgpt.com/library?file_id=libfile_9becd1fd51b48191a551ba09d7dccb67&account_id=personal
+minimum_confirmed_confidence: 0.75 
+confidence_comparison: ">="       
 
 cases:
-  # GC-01: Normal search. Choose the latest reliable record for the requested object.
   - name: gc_01_latest_reliable_history
     context:
-      object_name: Wallet
+      object_name: wallet
       records:
-        - fixture_id: wallet-latest
-          object: Wallet
-          location: bed
-          timestamp: '2026-10-28T13:50:00+09:00'
-          confidence: 0.85
-        - fixture_id: wallet-older
-          object: Wallet
-          location: desk
-          timestamp: '2026-10-28T09:00:00+09:00'
-          confidence: 0.98
-        - fixture_id: unrelated-glasses
-          object: Glasses
-          location: shelf
-          timestamp: '2026-10-28T14:00:00+09:00'
-          confidence: 0.99
+        - {fixture_id: wallet-latest, object: wallet, location: bed, timestamp: '2026-10-28T13:50:00+09:00', confidence: 0.85}
+        - {fixture_id: wallet-older, object: wallet, location: desk, timestamp: '2026-10-28T09:00:00+09:00', confidence: 0.98}
+        - {fixture_id: unrelated-glasses, object: glasses, location: table, timestamp: '2026-10-28T14:00:00+09:00', confidence: 0.99}
     expect_record: wallet-latest
     must_min_confidence: 0.75
     must_exclude: [wallet-older, unrelated-glasses]
     note: >-
-      AC-05. Select the latest reliable Wallet sighting, not the highest-confidence
-      record or the newer sighting of another object. The result is historical
-      evidence, not confirmation that the wallet is on the bed now.
+      Normal case. Select the latest reliable wallet sighting, not the highest-confidence
+      record (wallet-older, 0.98) and not the newer sighting of another object
+      (unrelated-glasses). The result is historical evidence, not confirmation that the
+      wallet is on the bed now. (AC-04, AC-05)
 
-  # GC-02: Boundary. Exactly 75% qualifies, including for Phone.
   - name: gc_02_phone_exactly_75_percent
     context:
-      object_name: Phone
+      object_name: phone
       records:
-        - fixture_id: phone-boundary
-          object: Phone
-          location: shelf
-          timestamp: '2026-10-28T13:00:00+09:00'
-          confidence: 0.75
+        - {fixture_id: phone-boundary, object: phone, location: table, timestamp: '2026-10-28T13:00:00+09:00', confidence: 0.75}
     expect_record: phone-boundary
     must_min_confidence: 0.75
     note: >-
-      SPEC 4.3, AC-05, 6.2 and 6.3. Phone is included in the supported object list.
-      The minimum confirmed confidence is inclusive: 0.75 qualifies.
+      Boundary case. The confidence equals the minimum threshold (SPEC 6.2 row 1).
+      policy.confidence_comparison is ">=", so 0.75 qualifies. (AC-05, 6.3)
 
-  # GC-03: Below the boundary. Do not confirm an unreliable location.
   - name: gc_03_below_75_percent
     context:
-      object_name: Glasses
+      object_name: glasses
       records:
-        - fixture_id: glasses-low
-          object: Glasses
-          location: sofa
-          timestamp: '2026-10-28T13:00:00+09:00'
-          confidence: 0.749
+        - {fixture_id: glasses-low, object: glasses, location: sofa, timestamp: '2026-10-28T13:00:00+09:00', confidence: 0.749}
     expect_record: null
     must_exclude: [glasses-low]
     note: >-
-      AC-05, 6.2 and 6.3. A raw score of 0.749 is below 0.75, so it cannot confirm
-      a sighting. There is no other reliable history. Return null/None without
-      rounding the score up or confirming the sofa.
+      Forbidden-behaviour case. A raw score of 0.749 is below 0.75, so it cannot confirm a
+      sighting and there is no other reliable history (SPEC 6.2 row 3). Return None without
+      rounding the score up. Offering the sofa as an unconfirmed `possible` answer is AC-06
+      and belongs to a later feature. (AC-05)
 
-  # GC-04: Missing evidence. Do not invent a record.
   - name: gc_04_no_records
     context:
-      object_name: Earphones
+      object_name: earphones
       records: []
     expect_record: null
     note: >-
-      AC-05 and 6.2. No historical evidence is available. Return null/None rather
-      than inventing a location, timestamp, or confidence. This does not prove
-      that the earphones are absent from the room.
+      Boundary case. No historical evidence is available (SPEC 6.2 row 4). Return None
+      instead of inventing a location, timestamp or confidence. This does not prove that
+      the earphones are absent from the room. (AC-05)
