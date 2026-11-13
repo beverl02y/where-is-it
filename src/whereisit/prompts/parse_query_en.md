@@ -101,20 +101,32 @@ These are designed validation examples, not interview quotations or actual model
 - If recovery cannot produce a valid result within the attempt limit or time budget, explain the processing failure and ask the user to restate the item name. Do not retrieve using guessed values.
 - Record internal model retries separately from user conversation turns.
   
-## Test Run Log
+## Test Run Log — English Gemini Prompt Tests (2026-11-13)
 
-Record the results of running the test inputs on the actual model. Record the model ID, `prompt_version`, and schema commit for each row.
+The English prompt `parse_query_en.md` (version 2) was tested independently on November 13, 2026. The table combines the actual successful results from three recorded checks; **it is not a new model run**.
 
-| # | Model ID | prompt_version | Schema commit | Actual output | Caught as expected? |
-|---|---|---|---|---|---|
-| 1 |  | 1 |  |  |  |
-| 2 |  | 1 |  |  |  |
-| 3 |  | 1 |  |  |  |
-| 5 |  | 1 |  |  |  |
-| 10 |  | 1 |  |  |  |
+- **Gemini model for cases 1, 2, 3, 5:** `gemini-3.5-flash-lite`
+- **Case 10:** invalid-JSON input supplied directly to the validator (no Gemini model call)
+- **Paired schema:** `src/whereisit/schemas/query.schema.json`
+- **Schema SHA-256:** `e61b38137bf186f1fb83ee926d4b62bb09521c8c77bdf1fde534249b56fa8ef9`
+- **Project schema Git commit reference:** `cda0463ff92ccc0f64ac2237c860bc6560bbd83e` (file history reference)
 
-(4, 6, 7, 8, 9 are verified not with model output but by feeding the corresponding outputs directly into the validator and post-processing. 3, 5, 12 can only be verified by running through the *Query asksAbout Object* matching.)
+| # | Model ID | prompt_version | Schema commit reference | Actual output | Result | Time (KST) |
+|---|---|---|---|---|---|---|
+| 1 | gemini-3.5-flash-lite | 2 | `cda0463` | `{"queries":[{"questionText":"Where's my phone? It's not on the desk.","objectName":"phone","questionType":"current_location","checkedPlaces":["desk"]}]}` | **PASS (parsing)** | 2026-11-13 12:58 |
+| 2 | gemini-3.5-flash-lite | 2 | `cda0463` | `{"queries":[{"questionText":"Ugh, where did that thing go","objectName":null}]}` | **PASS (parsing)** | 2026-11-13 13:00 |
+| 3 | gemini-3.5-flash-lite | 2 | `cda0463` | `{"queries":[{"questionText":"Where's my wallet?","objectName":"wallet","questionType":"current_location"}]}` | **PASS (parsing)** | 2026-11-13 13:00 |
+| 5 | gemini-3.5-flash-lite | 2 | `cda0463` | `{"queries":[{"questionText":"Where's my lighter?","objectName":"lighter","questionType":"current_location"}]}` | **PASS (parsing)** | 2026-11-13 13:00 |
+| 10 | No Gemini call (validator check) | 2 | `cda0463` | `NOT_JSON: partial response {"queries": [` | **PASS (invalid JSON rejected)** | 2026-11-13 12:54 |
+
+**Interpretation:** The four Gemini PASS results verify English parsing outputs and JSON schema compatibility. Test 10 confirms only invalid-JSON rejection. The team's actual website search/response functionality was tested separately.
+
+**Test evidence:** [Combined English Prompt Test Results](./Where_Is_It_Combined_English_Parser_Test_Results.md)
+
+(Cases 4, 6, 7, 8 and 9 concern validator/post-processing. The record-dependent portions of cases 3, 5 and 12 are tested separately from the prompt.)
 
 ## Change History
+
+- **2026-11-13:** Entered actual English prompt-test outputs for cases 1, 2, 3, and 5 using `gemini-3.5-flash-lite`, plus the validator result for case 10. Recorded the project's original schema hash and Git commit reference. Kept the system prompt unchanged.
 
 - 
