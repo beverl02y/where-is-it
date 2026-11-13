@@ -121,8 +121,6 @@ The English prompt `parse_query_en.md` (version 2) was tested independently on N
 
 **Interpretation:** The four Gemini PASS results verify English parsing outputs and JSON schema compatibility. Test 10 confirms only invalid-JSON rejection. The team's actual website search/response functionality was tested separately.
 
-**Test evidence:** [Combined English Prompt Test Results](./Where_Is_It_Combined_English_Parser_Test_Results.md)
-
 (Cases 4, 6, 7, 8 and 9 concern validator/post-processing. The record-dependent portions of cases 3, 5 and 12 are tested separately from the prompt.)
 
 ## Change History
