@@ -173,8 +173,6 @@ The following are deferred to a later version:
 - Per-detection visibility labels.
 - A separate time zone for each room.
 
-For requests outside this scope, explain the limitation and provide any relevant reliable last-seen record without inventing additional information.
-
 
 ## 5. Input and Output Interface
 
@@ -214,7 +212,7 @@ The parser resolves the question as follows.
 | Other item | Match against items this room's camera has recorded. An unmatched item receives a no-record response. |
 | Limitation request | Flag questions asking when an item disappeared or who or what moved it, so the answer can explain the scope limitation. |
 
-Apply the ontology's alias mappings during item resolution while preserving the original question wording. The full parsing rules and the parser golden cases (P-01 to P-17, each with input, expected result and linked AC) are maintained in `parse_query_en.md`.
+Apply the ontology's alias mappings during item resolution while preserving the original question wording.
 
 ### 5.2 Search Output
 
