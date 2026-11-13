@@ -1,20 +1,3 @@
-"""Golden tests: run tests/harness/golden_cases.yaml against the server code.
-
-The YAML is copied unchanged from github.com/beverl02y/where-is-it
-(tests/harness/golden_cases.yaml). Do not edit cases or expected values here
-without human approval (AGENTS.md section 4).
-
-Each case is checked at two levels:
-  1. record selection: Database.last_confirmed() must return the expected
-     fixture record (or None), honour must_min_confidence and never return a
-     record listed in must_exclude.
-  2. user answer: SearchEngine.ask("Where is my <object>?") must report that
-     same record as historical last-seen information (not "current"), or,
-     when expect_record is null, must not confirm any location.
-
-Run:  python -m pytest -q tests/test_golden_cases.py
-      WIIA_GOLDEN=/path/to/golden_cases.yaml python -m pytest -q tests/test_golden_cases.py
-"""
 from __future__ import annotations
 
 import os
