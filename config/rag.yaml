@@ -1,0 +1,65 @@
+
+use_when:                       # the rules answer everything else, instantly and without a model call
+  open_question: true           # habits, the past, "look first", "what/which", times ("usually", "오늘", "아까")
+  rule_answer: [clarify, unsupported]   # the rules could only ask back
+  described_unrecorded_item: true       # "the thing I drink from" — named nowhere, so the rules cannot match it
+  plain_unrecorded_name: false  # "Where is my jacket?" never recorded → not_found at once; a model cannot find what was never seen
+  skip: [instructions_in_question, several_items, korean_typo_clarification, out_of_service]  # SPEC §4.2 #9
+
+source:
+  documents: detection_records  # this Room's own Detection records — the only evidence the product may use (AGENTS rule 2)
+  fields: [object, appearance, location_label, color, name_ko, appearance_ko, location_ko]  # what a question can mention, in English and Korean
+  metadata: [id, detected_at, confidence, in_current_view]  # id is cited; time and confidence are shown; "in view" separates current from last seen
+  lookback_days: 7              # past habits need some history, but older records are less likely to describe where things are now
+  max_scanned: 800              # newest records first; a week of one camera fits well within this
+
+chunking:
+  strategy: per_record          # one record = one unit: each is already one short line (item, appearance, place, time, confidence)
+  max_chars: null               # no splitting needed — records are far shorter than any limit
+
+embedding:
+  provider: none                # no embeddings. Records are short, structured and few; what matters is the exact
+                                # item word, its Korean name and the time ("this morning", "오후 3시"), which word and
+                                # time matching gets right. Vague descriptions are resolved by the model reading the item list.
+
+store:
+  backend: sqlite               # the same database as the rule search — no second copy of room data to keep in sync
+  path: data/whereisit.db
+  table: detections
+  scope: room                   # every query filters by the Room taken from the key (AGENTS rule 4, AC-09)
+  metric: term_and_time_score   # +2 per question word found in the item name or Korean name, +1 per word found in
+                                # the other fields, +3 when the record falls inside a time window named in the question
+
+retrieval:
+  top_k: 20                     # matching records given to the model, best score first, then newest (fewer = faster answers)
+  item_list_k: 30               # every different item seen, with its latest sighting and its usual places (top 3)
+  min_score: 1                  # a record with score 0 is not "matching"; if none match, only the item list is given
+  no_records: rule_answer       # the Room has no records at all → nothing to retrieve; the rule answer already says so
+  rerank: false                 # MVP: scoring is already cheap and exact; turn on only if retrieval is shown to miss records
+  hybrid: false                 # no vector half to combine with; "hybrid" here means words + time, already in metric
+
+generation:
+  model: ""                     # empty = the detection model (gemini-3.8-flash); one model, one key, one quota
+  output: json                  # {answer, status, record_ids} — machine-checkable, never free text only
+  thinking_level: minimal       # fastest answers; if the model rejects it, the call is repeated once with "low"
+  max_output_tokens: 400        # answers are 1–4 sentences
+  timeout_seconds: 15           # leaves time inside the < 6 s target only when the model is fast; on timeout → rule answer
+  language: question            # answer in the question's language; Korean place names for Korean (AC-13)
+
+constraints:                    # enforced in code, not left to retrieval or to the model
+  cite_records: true            # every cited id must be one that was given; a place claim with no cited record → rule answer (AC-02, AC-06)
+  confirm_threshold: policy     # ontology policy: 0.75 with ">="; a "fact" built on a lower record is downgraded to possible (AC-03, AC-05, AC-06)
+  never_100_percent: true       # "100%" in an answer is rewritten as 99% (AC-06)
+  same_room_only: true          # retrieval never crosses Rooms (AC-09)
+  asked_item_only: true         # answer about the item asked; two or more fitting items → clarify, never choose (AC-02)
+  no_question_as_instruction: true  # instructions in a question are never followed and never reach the model (AC-02, AC-06)
+  no_people_or_pets: true       # never say a person or pet moved something (AGENTS rule 2)
+  on_any_failure: rule_answer   # network, quota, timeout, bad JSON, failed check → the rule answer (SPEC §4.2 #9)
+
+observability:
+  report_source: true           # every answer says rules or rag
+  report_elapsed_ms: true       # every answer carries its processing time (SPEC §6.3)
+  log_model_failures: true      # failed calls, unbacked answers and rejected thinking levels are logged as warnings
+  log_tool_calls: false         # there are no model tool calls (docs/ARCHITECTURE.md §3)
+  log_retrieved_records: false  # records describe a student's room; they stay out of server logs (privacy, SPEC §5.4)
+  log_question_text: false      # same reason
