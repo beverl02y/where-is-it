@@ -8,7 +8,7 @@
 | Input | One user question, 1–300 characters, as the user content. The prompt is the system instruction. |
 | Output | One JSON object matching `src/whereisit/schemas/query.schema.json` v2.1 (`response_mime_type: application/json`) |
 | Specified by | SPEC v2.1 §4.2 #3, #9, #12, §5.1, §6.2 · ontology `mini-ontology v2.1` (`entities.Query`, `reasoning_rules`) |
-| Test tool | `tools/test_parse_prompt.py` |
+| Test tool | `evals/run_parse_prompt.py` |
 
 ## Where the Prompt Fits
 
@@ -138,7 +138,7 @@ Expected parser output follows the prompt rules above; expected answers follow S
 - **Model:** `gemini-3.8-flash` · one call per question, no retries · system instruction = the prompt between the markers · `response_mime_type: application/json`
 - **Prompt:** `parse_query_en.md` prompt_version 3 · SHA-256 of prompt text `fb20a7b80c4c39cd…` · run from a local copy (not yet committed); the hash equals the prompt in this file
 - **Schema:** `src/whereisit/schemas/query.schema.json` v2.1 · SHA-256 `5a369d69cc571a3a…` · identical to GitHub commit `0196dcf`
-- **Grading (automatic, `tools/test_parse_prompt.py`):** pure JSON → schema → questionText copied exactly and lang correct → equal to the expected Queries (questionText, objectName, descriptors, lang, limitationRequest).
+- **Grading (automatic, `evals/run_parse_prompt.py`):** pure JSON → schema → questionText copied exactly and lang correct → equal to the expected Queries (questionText, objectName, descriptors, lang, limitationRequest).
 - **Not sent to the model:** #14 (length check) and #21–#24 (outside the service, instruction with no item) are handled in code before the parser.
 
 | # | Input | Actual output | Result | Time (ms) | Run at (KST) |
@@ -170,13 +170,13 @@ Expected parser output follows the prompt rules above; expected answers follow S
 **Summary:** 23/23 PASS. These results test the prompt's parsing only; searching camera records and the answers shown to users are tested separately.
 
 **Interpretation:**
-- `gemini-3.8-flash` follows prompt_version 3 on every case, including the cases the deployed rule parser fails (#2 placeholder, #12–#13 limitation request, #19 Korean slip; SPEC v2.1 Known Gaps 1, 2 and 4) and the multi-item and Korean splits (#7, #17).
+- `gemini-3.8-flash` follows prompt_version 3 on every case, including the cases the deployed rule parser fails (#2 placeholder, #12–#13 limitation request, #19 Korean slip) and the multi-item and Korean splits (#7, #17).
 - **Response time.** `gemini-3.8-flash` took 2.2–9.1 s per question (mean 3.8 s, median 3.4 s); #20 took 9.1 s. Parsing alone would then use most or all of the < 6 s total response target (SPEC §6.3), before searching and any fallback call. If the LLM parser is built, measure end-to-end time with the chosen model before adopting it.
 - These results test the prompt's parsing only, on 23 cases chosen to match the checklist. They are not the vision benchmark (AC-01) and do not test the answers users see.
-- #6 "card wallet" passes here because the prompt keeps the phrase as written; the app would still resolve it with `config.yaml`, which lacks that alias (SPEC v2.1 Known Gap 3).
+- #6 "card wallet" passes here because the prompt keeps the phrase as written; the app would still resolve it with `config.yaml`, which lacks that alias, so the deployed app still asks "wallet or card?".
 
 ## Change History
 
 - **2026-11-15 (Gemini test log):** Test Run Log: prompt_version 3 on `gemini-3.8-flash` with the schema in GitHub commit `0196dcf`, 23/23 PASS (mean 3.8 s, max 9.1 s per question).
-- **2026-11-13 (prompt_version 3):** New prompt following SPEC v2.1 and the ontology (`docs/ontology.yaml`, mini-ontology v2.1): output matches `query.schema.json` v2.1 (`descriptors`, `lang`, `limitationRequest` added; `questionType`, `urgency`, `checkedPlaces`, `lastUsedPlace` no longer requested); one Query per item with that item's part of the question; describing words in `descriptors`; known item names listed (including "headphones" / "헤드폰", as in `config.yaml`) so a typing slip is corrected only when exactly one name fits; instructions in the question treated as data. Added `tools/test_parse_prompt.py`.
+- **2026-11-13 (prompt_version 3):** New prompt following SPEC v2.1 and the ontology (`docs/ontology.yaml`, mini-ontology v2.1): output matches `query.schema.json` v2.1 (`descriptors`, `lang`, `limitationRequest` added; `questionType`, `urgency`, `checkedPlaces`, `lastUsedPlace` no longer requested); one Query per item with that item's part of the question; describing words in `descriptors`; known item names listed (including "headphones" / "헤드폰", as in `config.yaml`) so a typing slip is corrected only when exactly one name fits; instructions in the question treated as data. Added the test tool, now `evals/run_parse_prompt.py`.
 - **2026-11-13 (prompt_version 2):** English prompt tested on `gemini-3.5-flash-lite` for cases 1, 2, 3 and 5, and the validator for case 10. Superseded by prompt_version 3; kept in the Git history and in `parse_query.md` (Korean).

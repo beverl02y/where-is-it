@@ -50,7 +50,7 @@ Core value: **evidence-based last-seen information** — a confirmed observation
 - **Ordering is deterministic.** Ties are broken explicitly: `detected_at` newest first, then `confidence` highest first, then record id. The same records must always give the same answer, otherwise golden tests mean nothing.
 - Numbers and word lists live in `docs/ontology.yaml` or runtime configuration, not in code. Runtime item aliases must cover `vocabulary.item_aliases`.
 - New behaviour starts with a golden case or test that names its AC number.
-- A prompt change bumps its `prompt_version` and is re-run with `tools/test_parse_prompt.py`; the Test Run Log records the model, prompt hash and schema hash.
+- A prompt change bumps its `prompt_version` and is re-run with `evals/run_parse_prompt.py`; the Test Run Log records the model, prompt hash and schema hash.
 
 ## 6. Definition of Done
 
@@ -67,14 +67,15 @@ Development environment
 Common commands
 
 - Tests: `pytest -q` · lint and format: `ruff check .` / `ruff format .`
-- Parser prompt test: `python tools/test_parse_prompt.py --model gemini-3.8-flash` (writes `prompt_test_log.md`) · setup check without a model call: add `--fake`
+- Parser prompt test: `python evals/run_parse_prompt.py --model gemini-3.8-flash` (writes `prompt_test_log.md`) · setup check without a model call: add `--fake`
 
 Directories
 
-- `docs/` — `SPEC.md`, `Problem.md`, `ontology.yaml`, `research/` (interview logs), spike records, project description.
+- `docs/` — `SPEC.md`, `Problem.md`, `ontology.yaml`, `ARCHITECTURE.md`, `research/` (interview logs), `spikes/` (one file per spike), project description.
+- `config/` — `rag.yaml` (question fallback settings and their reasons).
 - `src/whereisit/prompts/` — `parse_query_en.md` (parser prompt, prompt_version 3, with its Test Run Log) and `parse_query.md` (Korean).
 - `src/whereisit/schemas/` — `query.schema.json` (Query JSON form, v2.1).
 - `tests/` — `harness/golden_cases.yaml` (retrieval golden cases gc_01–gc_04) and `test_search_golden.py`. These need the application's test fixtures (`db`, `settings`, `engine`) and run once the application code is in the repository.
-- `tools/` — `test_parse_prompt.py` (parser prompt test).
+- `evals/` — `run_parse_prompt.py` (parser prompt test against Gemini).
 
 Progress status is not written here: `pytest -q` results and the Test Run Log in `parse_query_en.md` are the source of truth.

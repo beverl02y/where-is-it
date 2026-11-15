@@ -87,7 +87,7 @@ evidence_sources:
     kind: supplied_interview_responses
 
   spike_plan:
-    file: spikes_2026-10-07_where-is-it.md
+    file: spikes/2026-10-07_object_detection.md
     kind: technical_test_design
 
   design:
