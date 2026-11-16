@@ -3,6 +3,9 @@
 - [English](#english)
 - [한국어](#한국어)
 
+> **Developers:** how to install, run, test and evaluate, the test scenarios with their AC numbers, and where each file is (including the differences from the course's standard structure): [section 7](#7-developer-guide-run-test-and-evaluate).
+> **개발자:** 설치·실행·테스트·평가 방법, AC 번호가 붙은 테스트 시나리오, 파일 위치(강의 표준 구조와 다른 점 포함): [7절](#7-개발자-안내-실행-테스트-평가).
+
 ---
 
 <a id="english"></a>
@@ -98,19 +101,19 @@ Everything runs on our live server. There is nothing to install.
 ### Step 4. Ask a question
 Type in the **Ask where-is-it** box and press **Ask** (or tap one of the item buttons below it). Example inputs:
 
-| Example question | What it tests |
-|---|---|
-| `Where are my glasses?` | Basic search (current location) |
-| `안경 어디 있어?` | Korean question → Korean answer |
-| `Where is my black wallet?` | Search by appearance |
-| `Where is my cable?` | Ambiguous word → asks you to clarify |
-| `Where is my umbrella?` | Item never seen → safe "not found" |
-| `What was on my desk this morning?` | AI answer from records (RAG) |
+| Example question | What it tests | Expected result | Related AC |
+|---|---|---|---|
+| `Where are my glasses?` | Basic search (current location) | **Visible now** with the place, time and confidence (≥ 75%) | AC-03 |
+| `안경 어디 있어?` | Korean question → Korean answer | The same result in Korean, with a Korean place name | AC-13 |
+| `Where is my black wallet?` | Search by appearance | An answer about the black wallet only | AC-02, AC-03 |
+| `Where is my cable?` | Ambiguous word → asks you to clarify | **Please clarify**: "charger or earphones?"; no place is guessed | AC-02 |
+| `Where is my umbrella?` | Item never seen → safe "not found" | **Not found**, with no place, time or confidence | AC-06 |
+| `What was on my desk this morning?` | AI answer from records (RAG) | Marked "AI answer from camera records"; only places the camera recorded; never 100% | AC-02, AC-06 |
 
 ### Step 5. Test "last seen"
 1. Move your glasses out of the camera's view (e.g. into a drawer).
 2. Wait for one or two more photos, then ask `Where are my glasses?` again.
-3. The answer now says where and when the glasses were **last seen**.
+3. The answer now says where and when the glasses were **last seen** (AC-04, AC-05).
 
 ### Step 6 (optional). Name your own zones
 1. On the camera page, press **Save test photo**.
@@ -187,7 +190,72 @@ Answers written by the AI from your records are marked **"AI answer from camera 
 - If the address or the run steps change, this guide is updated right away. Check the **Last updated** date below.
 - Questions or problems: `sywlae01@ajou.ac.kr`.
 
-*Last updated: `2026.11.10`*
+*Last updated: `2026.11.16`*
+
+---
+
+## 7. Developer Guide: Run, Test and Evaluate
+
+### 7.1 Environment
+- **Python 3.11** (the server and `pytest`); the evals in 7.4 also run on Python 3.9. Docker for the server.
+- A Gemini API key is needed only for real photo detection and the question fallback. The demo, the tests and the offline evals need no key.
+
+### 7.2 Install
+```bash
+git clone https://github.com/beverl02y/where-is-it.git && cd where-is-it
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+### 7.3 Run
+**Demo without a camera or Gemini** (two demo rooms with records):
+```bash
+pip install "uvicorn[standard]"
+export WIIA_MODEL_TYPE=none WIIA_API_KEY=demo
+python tools/seed_demo.py                      # prints two demo room links
+uvicorn app.main:create_app --factory --port 8080
+```
+Open one printed room link (http://localhost:8080/#room=…) and ask `Where are my glasses?`.
+
+**Real server:** copy `.env.example` to `.env` and set `WIIA_API_KEY`, `GEMINI_API_KEY`, `WIIA_INVITE_CODE`; then `docker compose up -d --build`. Full steps: `docs/SETUP.md`.
+
+### 7.4 Test
+| Command | What it checks |
+|---|---|
+| `pytest -q` | All automated tests: search and answers, Korean, parser, question fallback, room isolation, keys and PIN, plus the retrieval golden test (`tests/test_search_golden.py` with `tests/harness/golden_cases.yaml`) |
+| `python evals/run_parse_prompt.py` | The Gemini parser prompt (prompt_version 3) on 23 questions; needs `GEMINI_API_KEY`; writes `prompt_test_log.md` |
+
+### 7.5 Core test scenarios
+Run the demo (7.3) and ask these questions in **Room A**, except the last one (**Room B**). Room A has: a phone on the desk next to the laptop in the latest photo (94%); glasses on the bedside table (91%, 3 hours earlier); a wallet on the desk (86%, 1 hour earlier); a weak charger detection on the bed (58%). Room B has glasses on the shelf above the desk (89%) in its latest photo.
+
+The latest demo photo counts as the current view for 2 minutes after `seed_demo.py` runs; after that, answers start with "The camera hasn't sent a recent image" and report the last sighting instead (also correct behaviour, AC-04). Run `seed_demo.py` again to reset.
+
+| Room | Input | Expected result | Related AC |
+|---|---|---|---|
+| A | `Where is my phone?` | **Visible now**: on the desk next to the laptop, with time and 94% confidence | AC-03 |
+| A | `Where are my glasses?` | **Last seen** on the bedside table, with its time and 91% | AC-04, AC-05 |
+| A | `Where is my wallet?` | **Last seen** on the desk at the most recent reliable sighting (86%, 1 hour ago), not the older one | AC-05 |
+| A | `Where is my charger?` | **Possibility — not confirmed** (58%): may be on the bed; never stated as fact | AC-06 |
+| A | `Where are my earphones?` | **Not found**: no place, time or confidence; may be in a bag, drawer or outside the view | AC-06 |
+| A | `Where is my cable?` | **Please clarify**: "your charger or your earphones?"; no place guessed | AC-02 |
+| A | `안경 어디 있어?` | The same result as `Where are my glasses?`, written in Korean (the demo records only English place phrases; real camera records also hold Korean place names) | AC-13 |
+| A | `Where are my phone and wallet?` | Both items answered in one answer: phone visible now, wallet last seen | AC-02, AC-03, AC-05 |
+| B | `Where are my glasses?` | **Visible now** on the shelf above the desk (89%) — Room B's own record, never Room A's | AC-09 |
+
+### 7.6 Where each file is
+Where this repository differs from the course's standard structure (`00_README.md`):
+
+| Standard location | In this repository | Note |
+|---|---|---|
+| `src/<package>/` (application code) | `app/` (server), `capture/` (camera client) | Moves to `src/whereisit/` after the peer-review week. |
+| `src/<package>/tools/` (lecture 6 tools) | — | The model is given no tools (`docs/ARCHITECTURE.md` §3). The root `tools/` holds operations and measurement scripts (`devices.py`, `seed_demo.py`, `evaluate.py`, `benchmark.py`, `make_label_template.py`, `gcp_https.sh`). |
+| `src/<package>/prompts/parse_query.md` | `src/whereisit/prompts/parse_query_en.md` | English prompt, prompt_version 3. The earlier Korean prompt (prompt_version 2) is in the Git history. |
+| `src/<package>/schemas/<class>.schema.json` | `src/whereisit/schemas/query.schema.json` | |
+| `docs/PROBLEM.md` | `docs/Problem.md` | |
+| `docs/research/interviews.md` | `docs/research/interviews_en.md`, `interviews_kr.md`, `interview_answers.md` | |
+| `data/seed/` | — | Demo data is created by `tools/seed_demo.py`. |
+
+Also in this repository: `config.yaml` (runtime settings, read by the server), `config/rag.yaml` (question fallback design and values), `evals/run_parse_prompt.py` (parser prompt test), `docs/SETUP.md` (developer setup), `docs/ARCHITECTURE.md`, `CLAUDE.md`.
 
 ---
 
@@ -284,14 +352,14 @@ Answers written by the AI from your records are marked **"AI answer from camera 
 ### 4단계. 질문하기
 **Ask where-is-it** 입력창에 질문을 쓰고 **Ask**를 누릅니다 (아래 물건 버튼을 눌러도 됩니다). 예시 입력:
 
-| 예시 질문 | 확인하는 기능 |
-|---|---|
-| `안경 어디 있어?` | 기본 검색 (현재 위치), 한국어 답변 |
-| `Where are my glasses?` | 영어 질문 → 영어 답변 |
-| `검은색 지갑 어디 있어?` | 생김새로 검색 |
-| `Where is my cable?` | 뜻이 여러 개인 단어 → 다시 질문 |
-| `우산 어디 있어?` | 한 번도 본 적 없는 물건 → 안전하게 "찾지 못함" |
-| `오늘 아침 책상 위에 뭐 있었어?` | 기록 기반 AI 답변 (RAG) |
+| 예시 질문 | 확인하는 기능 | 기대 결과 | 관련 AC |
+|---|---|---|---|
+| `안경 어디 있어?` | 기본 검색 (현재 위치), 한국어 답변 | **지금 보임**과 장소·시각·신뢰도(75% 이상), 한국어 장소 이름 | AC-03, AC-13 |
+| `Where are my glasses?` | 영어 질문 → 영어 답변 | 같은 결과를 영어로 | AC-03 |
+| `검은색 지갑 어디 있어?` | 생김새로 검색 | 검은색 지갑에 대해서만 답변 | AC-02, AC-03 |
+| `Where is my cable?` | 뜻이 여러 개인 단어 → 다시 질문 | **다시 알려 주세요**: "충전기인가요, 이어폰인가요?" 장소를 추측하지 않음 | AC-02 |
+| `우산 어디 있어?` | 한 번도 본 적 없는 물건 → 안전하게 "찾지 못함" | **찾지 못함**, 장소·시각·신뢰도 없음 | AC-06 |
+| `오늘 아침 책상 위에 뭐 있었어?` | 기록 기반 AI 답변 (RAG) | "카메라 기록 기반 AI 답변" 표시, 카메라가 기록한 장소만, 100% 표시 없음 | AC-02, AC-06 |
 
 ### 5단계. "마지막으로 본 곳" 확인
 1. 안경을 카메라가 보지 못하는 곳(예: 서랍)으로 옮깁니다.
@@ -373,4 +441,17 @@ Answers written by the AI from your records are marked **"AI answer from camera 
 - 접속 주소나 실행 방법이 바뀌면 이 가이드를 바로 갱신합니다. 아래 **최종 수정일**을 확인하세요.
 - 문의 및 오류 제보: `sywlae01@ajou.ac.kr`
 
-*최종 수정일: `2026.11.10`*
+*최종 수정일: `2026.11.16`*
+
+---
+
+## 7. 개발자 안내: 실행, 테스트, 평가
+
+- **환경:** Python 3.11 (서버와 `pytest`; 7.4의 평가는 Python 3.9에서도 실행), 서버는 Docker. Gemini API 키는 실제 사진 인식과 질문 폴백에만 필요하며, 데모·테스트·오프라인 평가는 키 없이 실행됩니다.
+- **설치:** `git clone https://github.com/beverl02y/where-is-it.git && cd where-is-it` → `python3.11 -m venv .venv && source .venv/bin/activate` → `pip install -r requirements.txt -r requirements-dev.txt`
+- **데모 실행 (카메라·Gemini 없이):** `pip install "uvicorn[standard]"` → `export WIIA_MODEL_TYPE=none WIIA_API_KEY=demo` → `python tools/seed_demo.py` (데모 방 링크 2개 출력) → `uvicorn app.main:create_app --factory --port 8080` → 출력된 링크를 열고 `안경 어디 있어?` 질문
+- **실제 서버:** `.env.example`을 `.env`로 복사해 `WIIA_API_KEY`, `GEMINI_API_KEY`, `WIIA_INVITE_CODE` 설정 → `docker compose up -d --build` (자세한 단계: `docs/SETUP.md`)
+- **테스트:** `pytest -q` (골든 테스트 `tests/test_search_golden.py` 포함)
+- **데모 시나리오:** 데모를 실행한 뒤 방 A에서 `Where is my phone?`(지금 보임, AC-03), `Where are my glasses?`(마지막으로 본 곳, AC-04·05), `Where is my charger?`(가능성 — 확인되지 않음, AC-06), `Where is my cable?`(다시 알려 주세요, AC-02), `안경 어디 있어?`(한국어 답변, AC-13)를 질문하세요. 데모의 최신 사진은 `seed_demo.py` 실행 후 2분 동안만 현재 화면으로 인정됩니다.
+
+핵심 테스트 시나리오(입력, 기대 결과, 관련 AC)와 강의 표준 구조와 다른 파일 위치 표는 [English 7.5–7.6](#75-core-test-scenarios)에 있습니다.

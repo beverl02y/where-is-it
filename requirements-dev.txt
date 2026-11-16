@@ -1,0 +1,6 @@
+# Tests only — no model or GPU needed
+fastapi>=0.115
+python-multipart>=0.0.9
+pyyaml>=6.0
+httpx>=0.27
+pytest>=8.0

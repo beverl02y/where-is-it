@@ -1,0 +1,12 @@
+services:
+  api:
+    build: .
+    container_name: whereisit-api
+    restart: unless-stopped
+    ports:
+      - "${WIIA_BIND:-127.0.0.1}:8000:8000"   # set WIIA_BIND=0.0.0.0 in .env for phones on your Wi-Fi
+    env_file: .env                 # WIIA_API_KEY, GEMINI_API_KEY, WIIA_INVITE_CODE
+    volumes:
+      - ./data:/app/data           # database survives restarts/updates
+      - ./config.yaml:/app/config.yaml:ro
+

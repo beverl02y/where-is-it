@@ -61,21 +61,30 @@ Core value: **evidence-based last-seen information** — a confirmed observation
 
 Development environment
 
-- Python 3.11, pytest, PyYAML, jsonschema. Model calls use `google-genai`.
+- Python 3.11, FastAPI, SQLite, pytest, PyYAML, jsonschema. Model calls use `google-genai`.
+- Install for tests: `pip install -r requirements.txt -r requirements-dev.txt`. The camera computer needs only `requirements-client.txt`. Setup details: `docs/SETUP.md`.
 - Secrets in `.env` (`GEMINI_API_KEY`), never committed. Golden tests and `--fake` prompt checks need no key.
 
 Common commands
 
 - Tests: `pytest -q` · lint and format: `ruff check .` / `ruff format .`
+- Demo without camera or Gemini: `python tools/seed_demo.py`, then `uvicorn app.main:create_app --factory --port 8080`
+- Server: `docker compose up -d --build` · cameras (operator only): `python tools/devices.py list`
+- Vision benchmark: `python tools/evaluate.py --csv … --images …` · answer time: `python tools/benchmark.py --server … --room-key …`
 - Parser prompt test: `python evals/run_parse_prompt.py --model gemini-3.8-flash` (writes `prompt_test_log.md`) · setup check without a model call: add `--fake`
 
 Directories
 
+- `app/` — the server: API and keys (`main.py`), detection (`gemini_detector.py`), place phrase (`locate.py`, `zones.py`), records (`db.py`), question parsing (`scope.py`, `query_parser.py`, `korean.py`, `appearance.py`), search (`search.py`), question fallback (`rag.py`), pages (`static/`).
+- `capture/` — camera client for a computer with a camera.
+- `tools/` — operations and measurement scripts (camera admin, demo data, vision benchmark, answer-time benchmark, HTTPS setup). **Not** lecture 6 model tools: the model is given no tools (`docs/ARCHITECTURE.md` §3).
+- Root files — `config.yaml` (runtime settings), `Dockerfile`, `docker-compose.yml`, `requirements*.txt`, `.env.example` (copy to `.env`; never commit `.env`).
+- **Layout note:** the application code is in `app/` during the peer-review week; it moves to `src/whereisit/` (the course's standard `src/<package>/`) afterwards.
 - `docs/` — `SPEC.md`, `Problem.md`, `ontology.yaml`, `ARCHITECTURE.md`, `research/` (interview logs), `spikes/` (one file per spike), project description.
 - `config/` — `rag.yaml` (question fallback settings and their reasons).
-- `src/whereisit/prompts/` — `parse_query_en.md` (parser prompt, prompt_version 3, with its Test Run Log) and `parse_query.md` (Korean).
+- `src/whereisit/prompts/` — `parse_query_en.md` (parser prompt, prompt_version 3, with its Test Run Log).
 - `src/whereisit/schemas/` — `query.schema.json` (Query JSON form, v2.1).
-- `tests/` — `harness/golden_cases.yaml` (retrieval golden cases gc_01–gc_04) and `test_search_golden.py`. These need the application's test fixtures (`db`, `settings`, `engine`) and run once the application code is in the repository.
+- `tests/` — application tests (`conftest.py` provides the `db`, `settings` and `engine` fixtures), plus the retrieval golden cases `harness/golden_cases.yaml` (gc_01–gc_04) run by `test_search_golden.py`.
 - `evals/` — `run_parse_prompt.py` (parser prompt test against Gemini).
 
 Progress status is not written here: `pytest -q` results and the Test Run Log in `parse_query_en.md` are the source of truth.

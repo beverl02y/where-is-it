@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where-Is-It AI Zones</title>
+<style>
+  :root { --bg:#f6f4ef; --card:#fff; --ink:#1f2328; --muted:#6b6f76; --line:#e3dfd6; --accent:#2f5d50; --bad:#9b3b3b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16181b; --card:#1f2226; --ink:#e8e6e1; --muted:#9aa0a6; --line:#2e3237; --accent:#7fbfa9; --bad:#e08585; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.25rem; margin:0 0 4px; }
+  h2 { font-size:1rem; margin:0 0 8px; }
+  .sub { color:var(--muted); margin:0 0 12px; font-size:.9rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:12px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  input, textarea { font:inherit; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink); }
+  input { flex:1; min-width:140px; }
+  textarea { width:100%; min-height:180px; font-family:ui-monospace, Menlo, Consolas, monospace; font-size:.85rem; }
+  button { font:inherit; padding:10px 14px; border:0; border-radius:10px; background:var(--accent); color:#fff; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--accent); border:1px solid var(--line); }
+  button.small { padding:4px 10px; font-size:.85rem; }
+  canvas { width:100%; display:block; border-radius:10px; background:#222; touch-action:manipulation; cursor:crosshair; }
+  #msg { margin-top:8px; font-weight:600; }
+  #msg.err { color:var(--bad); }
+  #list { list-style:none; padding:0; margin:0; }
+  #list li { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .swatch { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:8px; vertical-align:middle; }
+  ol { margin:0; padding-left:20px; color:var(--muted); font-size:.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Where-Is-It AI — Room zones</h1>
+  <p class="sub">Optional. Without zones, Gemini describes places by itself (“on the desk next to the laptop”). Draw zones only to give a spot your own name, like “in my drawer” or “on Minji’s desk”.</p>
+
+  <div class="card">
+    <ol>
+      <li>Fix the camera phone in place and press <b>Save test photo</b> on its /camera page.</li>
+      <li>Here: press <b>Load latest camera photo</b> (this phone must be connected to your room — open your room link first).</li>
+      <li>Click the corners of one place, type its name, press <b>Finish zone</b>. Repeat.</li>
+      <li>Press <b>Save zones to server</b>. They work immediately. Moving to another room? Press <b>Clear saved zones</b>.</li>
+    </ol>
+    <div class="row" style="margin-top:10px">
+      <input id="apikey" type="password" placeholder="Room link or key (filled in automatically)" aria-label="Room link or key">
+      <button id="load">Load latest camera photo</button>
+      <label class="ghost" style="cursor:pointer;color:var(--accent)"><input id="file" type="file" accept="image/*" style="display:none">or choose an image file</label>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <div class="card">
+    <canvas id="canvas" width="1280" height="720" aria-label="Camera photo with zones"></canvas>
+    <div class="row" style="margin-top:10px">
+      <input id="zname" placeholder="Zone name, e.g. desk" aria-label="Zone name">
+      <input id="zlabel" placeholder="How to say it, e.g. on the desk" aria-label="Zone label">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="finish">Finish zone</button>
+      <button id="undo" class="ghost">Undo point</button>
+      <button id="clearcur" class="ghost">Clear points</button>
+      <span id="pts" style="color:var(--muted)">0 points</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Zones</h2>
+    <ul id="list"></ul>
+    <div class="row" style="margin-top:10px">
+      <button id="save">Save zones to server</button>
+      <button id="clearsaved" class="ghost">Clear saved zones (automatic locations)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h2>Backup copy (optional, for config.yaml)</h2><button id="copy" class="ghost small">Copy</button></div>
+    <textarea id="yaml" readonly aria-label="zones YAML"></textarea>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+const COLORS = ["#4aa3df", "#e0a85a", "#7fbf6a", "#d98ad9", "#e07a7a", "#5ec7c0", "#c9c25a", "#9a8ae0"];
+const canvas = $("canvas"), ctx = canvas.getContext("2d");
+let img = null, zones = [], current = [];
+$("apikey").value = store.get("wiia_room");
+
+function msg(t, err = false) { $("msg").textContent = t; $("msg").className = err ? "err" : ""; }
+function key() {
+  const t = $("apikey").value.trim(); const m = t.match(/room=([^&\s]+)/);
+  return decodeURIComponent(m ? m[1] : t);
+}
+function slug(s) { return s.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, ""); }
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  else { ctx.fillStyle = "#9aa0a6"; ctx.font = "28px system-ui"; ctx.fillText("Load a camera photo to start", 40, 60); }
+  const W = canvas.width, H = canvas.height, lw = Math.max(2, W / 400);
+  zones.forEach((z, i) => {
+    const c = COLORS[i % COLORS.length];
+    ctx.beginPath();
+    z.polygon.forEach(([x, y], j) => (j ? ctx.lineTo(x * W, y * H) : ctx.moveTo(x * W, y * H)));
+    ctx.closePath();
+    ctx.fillStyle = c + "33"; ctx.fill();
+    ctx.strokeStyle = c; ctx.lineWidth = lw; ctx.stroke();
+    const [x0, y0] = z.polygon[0];
+    ctx.font = `bold ${Math.round(W / 45)}px system-ui`;
+    ctx.fillStyle = "#000a"; ctx.fillText(z.name, x0 * W + 7, y0 * H + W / 40 + 1);
+    ctx.fillStyle = "#fff"; ctx.fillText(z.name, x0 * W + 6, y0 * H + W / 40);
+  });
+  if (current.length) {
+    ctx.strokeStyle = "#ff8c1a"; ctx.fillStyle = "#ff8c1a"; ctx.lineWidth = lw;
+    ctx.beginPath();
+    current.forEach(([x, y], j) => (j ? ctx.lineTo(x * W, y * H) : ctx.moveTo(x * W, y * H)));
+    ctx.stroke();
+    current.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x * W, y * H, lw * 2.5, 0, Math.PI * 2); ctx.fill(); });
+  }
+  $("pts").textContent = `${current.length} point${current.length === 1 ? "" : "s"}`;
+  renderList(); renderYaml();
+}
+
+function renderList() {
+  const ul = $("list"); ul.innerHTML = "";
+  if (!zones.length) { const li = document.createElement("li"); li.textContent = "No zones yet."; li.style.color = "var(--muted)"; ul.append(li); return; }
+  zones.forEach((z, i) => {
+    const li = document.createElement("li");
+    const span = document.createElement("span");
+    const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = COLORS[i % COLORS.length];
+    span.append(sw, document.createTextNode(`${z.name} — “${z.label}”`));
+    const del = document.createElement("button"); del.className = "ghost small"; del.textContent = "Delete";
+    del.onclick = () => { zones.splice(i, 1); draw(); };
+    li.append(span, del); ul.append(li);
+  });
+}
+
+function renderYaml() {
+  const r = (v) => Math.round(v * 1000) / 1000;
+  const lines = ["zones:"];
+  zones.forEach((z) => {
+    lines.push(`  - name: ${z.name}`);
+    lines.push(`    label: "${z.label.replace(/"/g, "'")}"`);
+    lines.push(`    polygon: [${z.polygon.map(([x, y]) => `[${r(x)}, ${r(y)}]`).join(", ")}]`);
+  });
+  $("yaml").value = lines.join("\n") + "\n";
+}
+
+function setImage(src) {
+  const im = new Image();
+  im.onload = () => {
+    img = im;
+    canvas.width = Math.min(im.naturalWidth, 1920);
+    canvas.height = Math.round(canvas.width * im.naturalHeight / im.naturalWidth);
+    draw();
+  };
+  im.src = src;
+}
+
+async function loadLatest() {
+  store.set("wiia_room", key());
+  try {
+    const res = await fetch("api/test-photos/latest", { headers: { "X-Room-Key": key() } });
+    if (res.status === 401) return msg("Not connected to a room — open your room link first.", true);
+    if (res.status === 404) return msg("No photo yet — press “Save test photo” on the camera page first.", true);
+    if (!res.ok) throw new Error(`server error ${res.status}`);
+    setImage(URL.createObjectURL(await res.blob()));
+    msg("Photo loaded. Click the corners of a place.");
+  } catch (e) { return msg(`Could not load the photo (${e.message}).`, true); }
+  try {
+    const z = await (await fetch("api/zones", { headers: { "X-Room-Key": key() } })).json();
+    if (!zones.length && z.zones) { zones = z.zones.map((q) => ({ name: q.name, label: q.label, polygon: q.polygon })); draw(); }
+  } catch {}
+}
+
+canvas.addEventListener("click", (e) => {
+  if (!img) return msg("Load a camera photo first.", true);
+  const b = canvas.getBoundingClientRect();
+  current.push([(e.clientX - b.left) / b.width, (e.clientY - b.top) / b.height]);
+  draw();
+});
+$("zname").addEventListener("input", () => {
+  if (!$("zlabel").dataset.touched) $("zlabel").value = $("zname").value.trim() ? `on the ${$("zname").value.trim()}` : "";
+});
+$("zlabel").addEventListener("input", () => { $("zlabel").dataset.touched = "1"; });
+$("finish").onclick = () => {
+  const name = slug($("zname").value);
+  if (current.length < 3) return msg("Click at least 3 corners first.", true);
+  if (!name) return msg("Type a zone name first.", true);
+  const label = $("zlabel").value.trim() || `on the ${name.replace(/_/g, " ")}`;
+  zones = zones.filter((z) => z.name !== name);
+  zones.push({ name, label, polygon: current });
+  current = []; $("zname").value = ""; $("zlabel").value = ""; delete $("zlabel").dataset.touched;
+  msg(`Added zone “${name}”. Add another, or copy the text below.`);
+  draw();
+};
+$("undo").onclick = () => { current.pop(); draw(); };
+$("clearcur").onclick = () => { current = []; draw(); };
+$("load").onclick = loadLatest;
+$("file").onchange = (e) => { const f = e.target.files[0]; if (f) { setImage(URL.createObjectURL(f)); msg("Image loaded. Click the corners of a place."); } };
+$("save").onclick = async () => {
+  if (!zones.length) return msg("Draw at least one zone first.", true);
+  if (current.length) return msg("You have unfinished points — press Finish zone or Clear points first.", true);
+  store.set("wiia_room", key());
+  try {
+    const res = await fetch("api/zones", { method: "POST", headers: { "X-Room-Key": key(), "Content-Type": "application/json" },
+      body: JSON.stringify({ zones }) });
+    if (res.status === 401) return msg("Not connected to a room — open your room link first.", true);
+    const r = await res.json();
+    if (!res.ok) return msg(`Not saved: ${r.detail || res.status}`, true);
+    msg(`Saved ${r.saved} zones (${r.zones.join(", ")}). New camera photos use them now.`);
+  } catch (e) { msg(`Could not save (${e.message}).`, true); }
+};
+$("clearsaved").onclick = async () => {
+  store.set("wiia_room", key());
+  try {
+    const res = await fetch("api/zones", { method: "DELETE", headers: { "X-Room-Key": key() } });
+    if (res.status === 401) return msg("Not connected to a room — open your room link first.", true);
+    if (!res.ok) throw new Error(`server error ${res.status}`);
+    zones = []; draw();
+    msg("Saved zones cleared. Locations are now Gemini’s own descriptions again.");
+  } catch (e) { msg(`Could not clear (${e.message}).`, true); }
+};
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("yaml").value); msg("Copied."); }
+  catch { $("yaml").select(); msg("Select-all done — press Ctrl+C (or long-press → Copy)."); }
+};
+draw();
+</script>
+</body>
+</html>

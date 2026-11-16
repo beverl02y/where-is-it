@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>where-is-it AI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3.5 10.5V8A4.5 4.5 0 0 1 8 3.5h2.5M21.5 3.5H24A4.5 4.5 0 0 1 28.5 8v2.5M28.5 21.5V24a4.5 4.5 0 0 1-4.5 4.5h-2.5M10.5 28.5H8A4.5 4.5 0 0 1 3.5 24v-2.5' fill='none' stroke='%2313213d' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M16 23c-3-3.4-4.6-6-4.6-8.7a4.6 4.6 0 0 1 9.2 0c0 2.7-1.6 5.3-4.6 8.7ZM16 12.6a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4Z' fill='%23f2a33a' fill-rule='evenodd'/%3E%3C/svg%3E">
+<style>
+  /* Colours from the new design (navy + blue) */
+  :root {
+    --ink: #0d1b2e; --muted: #55637a; --navy: #0f2a5f; --navy-hover: #17397d;
+    --blue: #2c63e0; --tint: #f3f6fc; --tint-strong: #e6edfb; --line: #dbe3f0; --white: #ffffff;
+    --green: #0b6e47; --green-bg: #e3f5ec; --amber: #8f5606; --amber-bg: #fdf1dc;
+    --grey: #47566c; --grey-bg: #edf0f5; --red: #a32626; --red-bg: #fbe9e9;
+    --bad: var(--red);  /* old name, still used in the HTML below */
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--white); color: var(--ink); font-size: 16px; line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 48px; }
+  button, input { font: inherit; }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  /* Top bar */
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--navy); font-weight: 700; letter-spacing: -0.01em; }
+  .brand svg { width: 30px; height: 30px; flex: none; }
+  .room-of { color: var(--muted); font-weight: 600; }
+  .wordmark { font-weight: 800; letter-spacing: -0.02em; color: #13213d; white-space: nowrap; }
+  .wordmark .dash { color: #f2a33a; }
+  .wordmark .ai { display: inline-block; margin-left: 2px; padding: 0 5px; border: 1.5px solid #13213d; border-radius: 5px; font-size: 0.75em; line-height: 1.4; vertical-align: 1px; letter-spacing: 0; }
+
+  .note { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.875rem; }
+  .note::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex: none; }
+
+  /* Headline */
+  .hero { padding: 32px 0 40px; }
+  h1 { margin: 0; font-size: clamp(2.5rem, 7vw, 4.25rem); line-height: 1.08; letter-spacing: -0.035em; font-weight: 800; }
+  .highlight { display: inline-block; margin-top: 6px; padding: 0 0.2em 0.04em; background: var(--blue); color: var(--white); }
+  .hero p { max-width: 560px; margin: 20px 0 0; color: var(--muted); font-size: 1.125rem; }
+
+  /* Panels */
+  .steps { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
+  .panel { min-width: 0; background: var(--tint); border-radius: var(--radius); padding: 28px; }
+  .step-title { margin: 0 0 20px; font-size: 1.25rem; letter-spacing: -0.015em; }
+  .step-title::before { content: ""; display: block; width: 44px; height: 3px; margin-bottom: 14px; background: var(--blue); }
+  .step-title span { color: var(--blue); margin-right: 6px; }
+  .row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; margin-bottom: 8px; }
+  .row .step-title { margin-bottom: 12px; }
+
+  /* Inputs and buttons */
+  form { display: flex; gap: 10px; }
+  input {
+    flex: 1; min-width: 0; min-height: 48px; padding: 10px 14px; color: var(--ink);
+    background: var(--white); border: 1.5px solid #b5c2d6; border-radius: 8px;
+  }
+  input::placeholder { color: #6b788c; }
+  input:focus { outline: 3px solid rgba(44, 99, 224, 0.3); border-color: var(--blue); }
+  button {
+    min-height: 48px; padding: 10px 18px; border: 1.5px solid var(--navy); border-radius: 8px;
+    background: var(--navy); color: var(--white); font-weight: 600; cursor: pointer;
+  }
+  button:hover { background: var(--navy-hover); border-color: var(--navy-hover); }
+  button:disabled { opacity: 0.55; cursor: not-allowed; }
+  button.ghost { min-height: 40px; padding: 6px 14px; background: var(--white); color: var(--navy); }
+  button.ghost:hover { background: var(--tint-strong); border-color: var(--navy); }
+  button.danger { color: var(--red); border-color: var(--red); }
+  button.danger:hover { background: var(--red-bg); border-color: var(--red); }
+
+  /* Quick question chips */
+  .quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .quick button {
+    min-height: 36px; padding: 5px 14px; background: var(--white); border: 1px solid var(--line);
+    border-radius: 18px; color: var(--navy); font-size: 0.875rem; font-weight: 500;
+  }
+  .quick button:hover { border-color: var(--blue); background: var(--tint-strong); }
+
+  /* Question and answer log */
+  /* Chat: fixed-height panel, messages scroll inside, question box pinned at the bottom */
+  .chat { display: flex; flex-direction: column; height: clamp(420px, calc(100dvh - 140px), 720px); }
+  .chat .step-title { flex: none; }
+  .chat .quick { flex: none; margin: 12px 0 10px; }
+  .chat .quick:empty { margin: 6px 0 0; }
+  .chat form { flex: none; }
+  .log {
+    display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0;
+    overflow-y: auto; overscroll-behavior: contain; padding: 2px 4px 2px 0;
+  }
+  .log > :first-child { margin-top: auto; }   /* few messages: sit near the question box, like a chat */
+  .log:empty { justify-content: center; }
+  .log:empty::before {
+    content: "Your answer will appear here."; display: block; padding: 18px; text-align: center;
+    border: 1.5px dashed #c5d1e6; border-radius: 12px; color: var(--muted); font-size: 0.9375rem;
+  }
+  .q { align-self: flex-end; max-width: 85%; padding: 8px 14px; background: var(--navy); color: var(--white); border-radius: 12px 12px 2px 12px; }
+  .a { align-self: flex-start; max-width: 92%; padding: 14px 16px; background: var(--white); border: 1px solid var(--line); border-radius: 12px 12px 12px 2px; }
+  .tag { display: inline-block; margin-bottom: 6px; padding: 3px 10px; border-radius: 12px; font-size: 0.8125rem; font-weight: 600; }
+  .t-current, .t-last_seen { background: var(--green-bg); color: var(--green); }
+  .t-possible, .t-clarify { background: var(--amber-bg); color: var(--amber); }
+  .t-not_found, .t-unsupported { background: var(--grey-bg); color: var(--grey); }
+  .t-error { background: var(--red-bg); color: var(--red); }
+  .meta { margin-top: 6px; color: var(--muted); font-size: 0.8125rem; }
+
+  /* Locations table */
+  table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+  th, td { padding: 12px 6px 12px 0; text-align: left; vertical-align: top; border-top: 1px solid var(--line); }
+  th { color: var(--muted); font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; border-top: 0; }
+  td:first-child { font-weight: 600; }
+  td:nth-child(2), td:nth-child(3) { color: var(--muted); }
+
+  /* Room settings */
+  #settings { margin-top: 24px; }
+  #settings > summary { list-style: none; cursor: pointer; }
+  #settings > summary::-webkit-details-marker { display: none; }
+  #settings > summary .step-title { margin: 0; }
+  #settings[open] > summary .step-title { margin-bottom: 16px; }
+  #settings > summary .step-title::after { content: " ▾"; color: var(--muted); font-size: 1rem; }
+  #settings[open] > summary .step-title::after { content: " ▴"; }
+  .muted { color: var(--muted); }
+  #settings p { margin: 0 0 12px; }
+  #roomname { color: var(--navy); letter-spacing: 0.04em; }
+  .pin { flex: none; width: 120px; }
+  .meta.error { color: var(--red); }
+  .waiting { color: var(--muted); font-style: italic; }
+  .small-details { margin-top: 12px; }
+  .small-details summary { cursor: pointer; color: var(--muted); }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
+  /* Promises */
+  .promises { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; padding: 56px 0 0; }
+  .promises h2 { margin: 0 0 6px; font-size: 1.0625rem; letter-spacing: -0.01em; }
+  .promises h2::before { content: ""; display: block; width: 44px; height: 3px; margin-bottom: 14px; background: var(--blue); }
+  .promises p { margin: 0; color: var(--muted); font-size: 0.9375rem; }
+
+  /* Phones */
+  @media (max-width: 800px) {
+    .wrap { padding: 0 16px 32px; }
+    .hero { padding: 16px 0 28px; }
+    .steps { grid-template-columns: 1fr; gap: 16px; }
+    .panel { padding: 20px; }
+    .promises { grid-template-columns: 1fr; gap: 24px; padding-top: 40px; }
+    .note { display: none; }
+  }
+
+  /* Room picker in the top bar */
+  .room-pick { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.875rem; }
+  .room-pick select {
+    min-height: 40px; max-width: 220px; padding: 6px 10px; font: inherit; font-weight: 600; color: var(--navy);
+    background: var(--white); border: 1.5px solid #b5c2d6; border-radius: 8px; cursor: pointer;
+  }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .tabs button {
+    min-height: 44px; padding: 8px 18px; background: none; border: 0; border-bottom: 3px solid transparent;
+    border-radius: 0; color: var(--muted); font-weight: 600;
+  }
+  .tabs button:hover { background: none; color: var(--navy); border-color: transparent; }
+  .tabs button.active, .tabs button.active:hover { border-bottom-color: var(--blue); }
+  .tabs button.active { color: var(--navy); }
+  [hidden] { display: none !important; }
+
+  /* Saved rooms list */
+  .room-list { margin: 0; padding: 0; list-style: none; }
+  .room-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .room-list li:first-child { border-top: 0; }
+  .room-name { flex: 1; min-width: 140px; font-weight: 600; }
+  .room-id { display: block; color: var(--muted); font-size: 0.8125rem; font-weight: 400; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; background: var(--green-bg); color: var(--green); font-size: 0.8125rem; font-weight: 600; }
+
+  /* Storage numbers */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0 0 20px; }
+  .stat { padding: 16px; background: var(--white); border: 1px solid var(--line); border-radius: 10px; }
+  .stat dt { color: var(--muted); font-size: 0.8125rem; }
+  .stat dd { margin: 4px 0 0; color: var(--navy); font-size: 1.25rem; font-weight: 700; }
+  .panel + .panel { margin-top: 24px; }
+
+  @media (max-width: 800px) {
+    .topbar { flex-wrap: wrap; }
+    .stats { grid-template-columns: 1fr; }
+    .tabs button { padding: 8px 12px; }
+    .pinform { flex-wrap: wrap; }
+    .camid { flex-basis: 100%; }
+    .pin { flex: 1; width: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M3.5 10.5V8A4.5 4.5 0 0 1 8 3.5h2.5M21.5 3.5H24A4.5 4.5 0 0 1 28.5 8v2.5M28.5 21.5V24a4.5 4.5 0 0 1-4.5 4.5h-2.5M10.5 28.5H8A4.5 4.5 0 0 1 3.5 24v-2.5" fill="none" stroke="#13213d" stroke-width="3" stroke-linecap="round"/>
+      <path d="M16 23c-3-3.4-4.6-6-4.6-8.7a4.6 4.6 0 0 1 9.2 0c0 2.7-1.6 5.3-4.6 8.7ZM16 12.6a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4Z" fill="#f2a33a" fill-rule="evenodd"/>
+    </svg>
+      <span class="wordmark" aria-label="where-is-it AI">where<span class="dash">-</span>is<span class="dash">-</span>it <span class="ai">AI</span></span><span class="room-of" id="title"></span>
+    </div>
+    <label class="room-pick" id="roompick-wrap">Room
+      <select id="roompick" aria-label="Choose a room"></select>
+    </label>
+  </header>
+
+  <section class="hero">
+    <h1>Lost something?<br><span class="highlight">Just ask.</span></h1>
+    <p id="subtitle">Ask where something is. You get an answer only when the camera actually saw it.</p>
+  </section>
+
+  <!-- ============ Before anything else: connect a room ============ -->
+  <div id="gate" hidden>
+    <section class="panel">
+      <h2 class="step-title">Connect your room first</h2>
+      <p class="muted">Enter the <b>camera ID</b> and <b>PIN</b> shown on your room's camera page. After that you can ask where things are.</p>
+      <form id="gate-pinform" class="pinform">
+        <input id="gate-camid" class="camid" autocomplete="off" autocapitalize="off" placeholder="Camera ID, e.g. 4bff35aa" aria-label="Camera ID">
+        <input id="gate-pin" class="pin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" aria-label="PIN">
+        <button>Connect</button>
+      </form>
+      <details class="small-details">
+        <summary>Or paste a room link</summary>
+        <form id="gate-keyform" style="margin-top:8px"><input id="gate-roomkey" type="password" placeholder="Room link or key" aria-label="Room link or key"><button>Connect</button></form>
+      </details>
+      <p class="meta" id="gatemsg"></p>
+    </section>
+  </div>
+
+  <!-- ============ Shown only after a room is connected ============ -->
+  <div id="app" hidden>
+  <nav class="tabs" aria-label="Pages">
+    <button type="button" class="active" data-tab="find">Find</button>
+    <button type="button" data-tab="rooms">Rooms</button>
+    <button type="button" data-tab="storage">Storage</button>
+  </nav>
+
+  <!-- ============ Tab 1: Find ============ -->
+  <div id="tab-find">
+    <main class="steps">
+      <section class="panel chat" id="chat">
+        <h2 class="step-title">Ask where-is-it</h2>
+        <!-- old messages scroll up inside this box; the question box stays at the bottom -->
+        <div class="log" id="log" aria-live="polite"></div>
+        <div class="quick" id="quick"></div>
+        <form id="ask">
+          <input id="question" autocomplete="off" placeholder="Where are my glasses?" aria-label="Question">
+          <button type="submit">Ask</button>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ Tab 2: Rooms ============ -->
+  <div id="tab-rooms" hidden>
+    <section class="panel">
+      <h2 class="step-title">Your rooms</h2>
+      <p class="muted">Rooms saved on this phone. Tap <b>Switch</b> to change the room you are asking about.</p>
+      <ul class="room-list" id="roomlist"></ul>
+    </section>
+
+    <section class="panel">
+      <h2 class="step-title">Add a room</h2>
+      <p class="muted">Enter the <b>camera ID</b> and <b>PIN</b> shown on that room's camera page:</p>
+      <form id="pinform" class="pinform">
+        <input id="camid" class="camid" autocomplete="off" autocapitalize="off" placeholder="Camera ID, e.g. 4bff35aa" aria-label="Camera ID">
+        <input id="pin" class="pin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" aria-label="PIN">
+        <button>Add</button>
+      </form>
+      <details class="small-details">
+        <summary>Or paste a room link</summary>
+        <form id="keyform" style="margin-top:8px"><input id="roomkey" type="password" placeholder="Room link or key" aria-label="Room link or key"><button>Add</button></form>
+      </details>
+      <p class="meta" id="setmsg"></p>
+    </section>
+  </div>
+
+  <!-- ============ Tab 3: Storage ============ -->
+  <div id="tab-storage" hidden>
+    <section class="panel">
+      <h2 class="step-title">Storage for <span id="storename">no room yet</span></h2>
+      <dl class="stats">
+        <div class="stat"><dt>Photos stored</dt><dd id="st-photos">—</dd></div>
+        <div class="stat"><dt>Last photo</dt><dd id="st-last">—</dd></div>
+        <div class="stat"><dt>Camera added</dt><dd id="st-created">—</dd></div>
+      </dl>
+      <p class="muted">Old records are deleted automatically after the number of days set in <b>config.yaml</b> (<code>retention_days</code>, 30 by default).</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="step-title">Delete records</h2>
+      <p class="muted">This deletes every item record and stored photo of the room above. The camera and its ID + PIN stay, so it keeps working.</p>
+      <div class="buttons">
+        <button type="button" class="ghost danger" id="wipe">Delete this room’s history</button>
+      </div>
+      <p class="meta" id="storemsg"></p>
+    </section>
+  </div>
+  </div><!-- /#app -->
+
+  <section class="promises" aria-label="How the answers work">
+    <div>
+      <h2>It never guesses</h2>
+      <p>If the camera didn't see an item, it says so instead of inventing a place.</p>
+    </div>
+    <div>
+      <h2>Your room stays private</h2>
+      <p>Only phones with your camera ID and PIN can see this room's records.</p>
+    </div>
+    <div>
+      <h2>Old records go away</h2>
+      <p>Item records are deleted automatically after a while, and you can delete them any time.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// ---------- Saved rooms (kept in this browser only) ----------
+// Each room looks like: { id: "cda0e7d3", name: "shuaein's room", key: "..." }
+function readStorage(name, fallback) {
+  try { return localStorage.getItem(name) || fallback; } catch { return fallback; }
+}
+function writeStorage(name, value) {
+  try { localStorage.setItem(name, value); } catch {}
+}
+
+let rooms = JSON.parse(readStorage("wiia_rooms", "[]"));
+let roomKey = readStorage("wiia_room", "");   // the room we are using now
+
+function saveRooms() {
+  writeStorage("wiia_rooms", JSON.stringify(rooms));
+  writeStorage("wiia_room", roomKey);
+}
+
+// A room connected before this update: put it in the list too
+if (roomKey && !rooms.some((r) => r.key === roomKey)) {
+  rooms.push({ id: "", name: "My room", key: roomKey });
+  saveRooms();
+}
+
+// The room key comes from the room link (…/#room=KEY) shown on the camera page.
+function keyFrom(text) {
+  const m = String(text).match(/room=([^&\s]+)/);
+  return decodeURIComponent(m ? m[1] : String(text)).trim();
+}
+if (location.hash.includes("room=")) {
+  addRoom({ id: "", name: "New room", key: keyFrom(location.hash) });
+  history.replaceState(null, "", location.pathname + location.search);   // keep the key out of the address bar
+}
+
+function addRoom(room) {
+  // the same camera again: replace the old entry instead of adding twice
+  rooms = rooms.filter((r) => r.key !== room.key && !(room.id && r.id === room.id));
+  rooms.push(room);
+  roomKey = room.key;
+  saveRooms();
+}
+
+function switchRoom(key) {
+  roomKey = key;
+  saveRooms();
+  $("log").innerHTML = "";   // old answers belong to the old room
+  showTab("find");
+  loadAll();
+}
+
+function removeRoom(key) {
+  rooms = rooms.filter((r) => r.key !== key);
+  if (roomKey === key) roomKey = rooms.length ? rooms[0].key : "";
+  saveRooms();
+  $("log").innerHTML = "";
+  loadAll();
+}
+
+function renderRooms() {
+  // 1. the dropdown in the top bar
+  const pick = $("roompick");
+  pick.innerHTML = "";
+  if (rooms.length === 0) pick.append(new Option("No room yet", ""));
+  for (const r of rooms) pick.append(new Option(r.name, r.key, false, r.key === roomKey));
+  pick.append(new Option("+ Add a room…", "add"));
+
+  // 2. the list in the Rooms tab
+  const list = $("roomlist");
+  list.innerHTML = "";
+  if (rooms.length === 0) {
+    const li = document.createElement("li");
+    li.className = "muted";
+    li.textContent = "No rooms yet. Add one below.";
+    list.append(li);
+  }
+  for (const r of rooms) {
+    const li = document.createElement("li");
+    const name = document.createElement("span");
+    name.className = "room-name";
+    name.textContent = r.name;
+    const id = document.createElement("span");
+    id.className = "room-id";
+    id.textContent = r.id ? "Camera ID " + r.id : "";
+    name.append(id);
+    li.append(name);
+
+    if (r.key === roomKey) {
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = "Current";
+      li.append(badge);
+    } else {
+      const sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "ghost";
+      sw.textContent = "Switch";
+      sw.onclick = () => switchRoom(r.key);
+      li.append(sw);
+    }
+    const rm = document.createElement("button");
+    rm.type = "button";
+    rm.className = "ghost danger";
+    rm.textContent = "Remove from this phone";
+    rm.onclick = () => removeRoom(r.key);
+    li.append(rm);
+    list.append(li);
+  }
+}
+
+$("roompick").addEventListener("change", (e) => {
+  if (e.target.value === "add") {
+    if ($("app").hidden) $("gate-camid").focus();   // already on the connect screen
+    else { showTab("rooms"); $("camid").focus(); }
+    renderRooms();
+    return;
+  }
+  if (e.target.value) switchRoom(e.target.value);
+});
+
+// ---------- Tabs ----------
+function showTab(name) {
+  for (const t of ["find", "rooms", "storage"]) $("tab-" + t).hidden = (t !== name);
+  document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+}
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+// ---------- Talking to the server ----------
+async function api(path, opts = {}) {
+  const res = await fetch(path, { ...opts, headers: { "Content-Type": "application/json", "X-Room-Key": roomKey, ...(opts.headers || {}) } });
+  if (!res.ok) {
+    const err = new Error(res.status === 401 ? "Not connected to a room — add one in the Rooms tab." : `Server error ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+// ---------- Connect screen vs. the main page ----------
+// Without a working room, only the camera ID + PIN form is shown.
+function setConnected(on, msg) {
+  $("gate").hidden = on;
+  $("app").hidden = !on;
+  $("roompick-wrap").hidden = !on && rooms.length === 0;   // nothing to pick yet
+  $("subtitle").textContent = on
+    ? "Ask where something is. You get an answer only when the camera actually saw it."
+    : "Connect your room's camera to start.";
+  if (!on) {
+    $("gatemsg").textContent = msg || "";
+    $("gatemsg").classList.toggle("error", !!msg);
+  }
+}
+
+// ---------- Ask ----------
+const LABEL = { current: "Visible now", last_seen: "Last seen", possible: "Possibility — not confirmed",
+  not_found: "Not found", clarify: "Please clarify", unsupported: "Not supported", error: "Error" };
+const LABEL_KO = { current: "지금 보임", last_seen: "마지막으로 본 곳", possible: "가능성 — 확인되지 않음",
+  not_found: "찾지 못함", clarify: "다시 알려 주세요", unsupported: "지원하지 않음", error: "오류" };
+
+function bubble(cls, text, status, meta, lang) {
+  const el = document.createElement("div");
+  el.className = cls;
+  if (status) { const t = document.createElement("span"); t.className = `tag t-${status}`; t.textContent = (lang === "ko" ? LABEL_KO : LABEL)[status] || status; el.append(t, document.createElement("br")); }
+  el.append(document.createTextNode(text));
+  if (meta) { const m = document.createElement("div"); m.className = "meta"; m.textContent = meta; el.append(m); }
+  $("log").append(el);
+  $("log").scrollTo({ top: $("log").scrollHeight, behavior: "smooth" });   // newest at the bottom, older ones move up
+  return el;
+}
+
+async function ask(q) {
+  if (!q.trim()) return;
+  $("chat").scrollIntoView({ block: "nearest", behavior: "smooth" });   // keep the whole chat box on screen
+  bubble("q", q);
+  const ko = /[\uac00-\ud7a3]/.test(q);
+  // AI (RAG) answers take a moment: show a "thinking" line if the answer isn't back quickly
+  let wait = null;
+  const waitTimer = setTimeout(() => { wait = bubble("a", ko ? "카메라 기록을 살펴보는 중…" : "Looking through the camera records…"); wait.classList.add("waiting"); }, 400);
+  try {
+    const a = await api("api/ask", { method: "POST", body: JSON.stringify({ question: q }) });
+    const time = a.elapsed_ms >= 1000 ? `${(a.elapsed_ms / 1000).toFixed(1)} s` : `${a.elapsed_ms} ms`;
+    const meta = a.source === "rag"
+      ? (a.lang === "ko" ? `AI 답변 · 카메라 기록 기반 · ${time}` : `AI answer from camera records · ${time}`)
+      : (a.lang === "ko" ? `${time} 만에 답변` : `answered in ${time}`);
+    bubble("a", a.message, a.status, meta, a.lang);
+  } catch (e) { bubble("a", e.message, "error"); }
+  finally { clearTimeout(waitTimer); if (wait) wait.remove(); }
+}
+$("ask").addEventListener("submit", (e) => { e.preventDefault(); const q = $("question").value; $("question").value = ""; ask(q); });
+
+// ---------- Add a room ----------
+// Used by both the connect screen and the Rooms tab (they have their own inputs).
+function wirePinForm(formId, camId, pinId, msgId) {
+  $(formId).addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = $(msgId);
+    const camera_id = $(camId).value.trim(), pin = $(pinId).value.trim();
+    if (!camera_id || !pin) { msg.textContent = "Enter both the camera ID and the PIN."; msg.classList.add("error"); return; }
+    msg.textContent = "Connecting…"; msg.classList.remove("error");
+    try {
+      const res = await fetch("api/room/connect", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ camera_id, pin }) });
+      const r = await res.json().catch(() => ({}));
+      if (!res.ok) { msg.textContent = r.detail || `Could not connect (${res.status})`; msg.classList.add("error"); return; }
+      addRoom({ id: r.device.id, name: r.device.name, key: r.room_key });
+      $(camId).value = ""; $(pinId).value = "";
+      msg.textContent = `Added ${r.device.name}.`;
+      switchRoom(r.room_key);
+    } catch (err) { msg.textContent = `Can't reach the server (${err.message}).`; msg.classList.add("error"); }
+  });
+}
+function wireKeyForm(formId, inputId) {
+  $(formId).addEventListener("submit", (e) => {
+    e.preventDefault();
+    const key = keyFrom($(inputId).value);
+    if (!key) return;
+    addRoom({ id: "", name: "New room", key: key });
+    $(inputId).value = "";
+    switchRoom(key);   // loadAll() checks the key and goes back to the connect screen if it's wrong
+  });
+}
+wirePinForm("gate-pinform", "gate-camid", "gate-pin", "gatemsg");
+wirePinForm("pinform", "camid", "pin", "setmsg");
+wireKeyForm("gate-keyform", "gate-roomkey");
+wireKeyForm("keyform", "roomkey");
+
+// ---------- Storage: delete history ----------
+let wipeArmed = false;
+$("wipe").addEventListener("click", async () => {
+  if (!roomKey) { $("storemsg").textContent = "Choose a room first."; return; }
+  if (!wipeArmed) {   // ask twice, so it isn't deleted by accident
+    wipeArmed = true; $("wipe").textContent = "Tap again to delete all records";
+    setTimeout(() => { wipeArmed = false; $("wipe").textContent = "Delete this room’s history"; }, 4000);
+    return;
+  }
+  wipeArmed = false; $("wipe").textContent = "Delete this room’s history";
+  try { const r = await api("api/room/history", { method: "DELETE" }); $("storemsg").textContent = `Deleted ${r.deleted_photos} photos’ records.`; loadAll(); }
+  catch (e) { $("storemsg").textContent = e.message; }
+});
+
+// ---------- Load everything for the current room ----------
+function when(iso) { return iso ? new Date(iso).toLocaleString() : "none yet"; }
+
+async function loadAll() {
+  renderRooms();
+  if (!roomKey) { setConnected(false); resetRoomInfo(); return; }
+
+  try {
+    const r = await api("api/room");
+    const dev = r.device;
+    // keep the saved name and camera ID up to date
+    const saved = rooms.find((x) => x.key === roomKey);
+    if (saved && (saved.name !== dev.name || saved.id !== dev.id)) { saved.name = dev.name; saved.id = dev.id; saveRooms(); renderRooms(); }
+    $("title").textContent = `— ${dev.name}`;
+    document.title = `where-is-it AI — ${dev.name}`;
+    $("storename").textContent = dev.name;
+    $("st-photos").textContent = r.photos;
+    $("st-last").textContent = when(dev.last_photo_at);
+    $("st-created").textContent = new Date(dev.created_at).toLocaleDateString();
+    setConnected(true);
+  } catch (e) {
+    resetRoomInfo();
+    if (e.status === 401) {   // the saved key or link doesn't open any room
+      setConnected(false, "This room couldn't be opened. Enter the camera ID and PIN again.");
+      return;
+    }
+    setConnected(true);       // server hiccup: keep the page, the Ask box shows the error
+  }
+
+  try {
+    const data = await api("api/objects");
+    $("quick").innerHTML = "";
+    for (const o of data.objects) {
+      if (o.key_item === false) continue;   // quick buttons only for the 7 key items
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = o.display;
+      b.onclick = () => ask(`Where ${o.display.endsWith("s") ? "are" : "is"} my ${o.display}?`);
+      $("quick").append(b);
+    }
+  } catch { $("quick").innerHTML = ""; }
+}
+
+function resetRoomInfo() {
+  $("title").textContent = "";
+  document.title = "where-is-it AI";
+  $("storename").textContent = "no room yet";
+  $("quick").innerHTML = "";
+  ["st-photos", "st-last", "st-created"].forEach((id) => { $(id).textContent = "—"; });
+}
+
+setConnected(!!roomKey);   // show the right screen right away; loadAll() then checks the saved room
+loadAll();
+</script>
+</body>
+</html>
