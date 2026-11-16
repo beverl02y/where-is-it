@@ -1,3 +1,7 @@
+# config/rag.yaml — question fallback (RAG) for Where-Is-It AI
+# Design: docs/ARCHITECTURE.md §4 · rules: docs/SPEC.md §4.2 #9 · guardrails: AGENTS.md §3
+# The runtime configuration (config.yaml → rag) must use these values. Change a value here first,
+# with its reason, then re-measure (SPEC §6.3); never change a value after seeing results.
 
 use_when:                       # the rules answer everything else, instantly and without a model call
   open_question: true           # habits, the past, "look first", "what/which", times ("usually", "오늘", "아까")
@@ -18,7 +22,7 @@ chunking:
   max_chars: null               # no splitting needed — records are far shorter than any limit
 
 embedding:
-  provider: none                # no embeddings. Records are short, structured and few; what matters is the exact
+  provider: none                # no embeddings.Records are short, structured and few; what matters is the exact
                                 # item word, its Korean name and the time ("this morning", "오후 3시"), which word and
                                 # time matching gets right. Vague descriptions are resolved by the model reading the item list.
 
