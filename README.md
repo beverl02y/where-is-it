@@ -3,8 +3,8 @@
 - [English](#english)
 - [한국어](#한국어)
 
-> **Developers:** how to install, run, test and evaluate, the test scenarios with their AC numbers, and where each file is (including the differences from the course's standard structure): [section 7](#7-developer-guide-run-test-and-evaluate).
-> **개발자:** 설치·실행·테스트·평가 방법, AC 번호가 붙은 테스트 시나리오, 파일 위치(강의 표준 구조와 다른 점 포함): [7절](#7-개발자-안내-실행-테스트-평가).
+> **Developers:** how to install, run, test and evaluate, the test scenarios with their AC numbers, and where each file is: [section 7](#7-developer-guide-run-test-and-evaluate).
+> **개발자:** 설치·실행·테스트·평가 방법, AC 번호가 붙은 테스트 시나리오, 파일 위치: [7절](#7-개발자-안내-실행-테스트-평가).
 
 ---
 
