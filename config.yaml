@@ -1,0 +1,137 @@
+# Where-Is-It AI — configuration
+# Detection: Gemini 3.8 Flash. Keys and the invite code live in .env, not here.
+
+server:
+  api_key: "change-me"            # admin key — set WIIA_API_KEY in .env instead
+  db_path: "data/whereisit.db"
+  timezone: "Asia/Seoul"          # used when telling you the time an object was seen
+  save_frames: false              # privacy default: photos are analysed and discarded
+  retention_days: 30              # records older than this are deleted
+
+detection:
+  model_type: "gemini"            # "gemini", or "none" for demo data / tests (needs GEMINI_API_KEY)
+  detect_all_objects: true        # also find and answer about items beyond the 7 key objects
+  store_threshold: 0.15           # weaker detections are kept as "possibilities" only
+  confirm_threshold: 0.75         # SPEC 6.3: stated as a fact only at >= 75%
+
+gemini:
+  model: "gemini-3.8-flash"
+  thinking_level: "low"           # low = fastest and cheapest; medium/high = more careful
+  media_resolution: "high"        # high helps with small items (earphones, cards, hair ties)
+  max_image_side: 1600            # photos are shrunk to this many pixels before sending
+  tiles: 2                        # 2 = send the photo + 4 zoomed-in parts so far/small items are seen
+                                  # (about 3x the input cost per photo); 1 = whole photo only
+  max_distance_m: 3               # look carefully for items up to about this many metres away
+  timeout_seconds: 30
+  max_objects: 40                 # most objects kept from one photo
+
+# Hybrid RAG fallback. Normal "where is my X?" questions are answered instantly by rules (no AI,
+# free). Questions the rules can't handle — vague names ("the thing I drink from"), questions about
+# the past ("what was on my desk this morning?"), "where do I usually leave it?" — are answered by
+# Gemini from THIS camera's records only (Retrieval-Augmented Generation). If Gemini fails, the
+# rule answer is used. About $0.002-0.005 per RAG answer.
+rag:
+  enabled: true
+  model: ""                       # empty = the same model as gemini.model
+  lookback_days: 7                # records older than this are not searched
+  max_records: 20                 # most matching records given to Gemini (fewer = faster)
+  max_items: 30                   # most different items listed for Gemini (latest sighting each)
+  timeout_seconds: 15
+  thinking_level: "minimal"       # minimal = fastest answers (was "low"); falls back to low if not accepted
+  max_output_tokens: 400          # answers are 1-4 sentences
+
+# Each camera phone is its own room with separate records.
+devices:
+  invite_code: ""                 # leave empty here; set WIIA_INVITE_CODE in .env
+  max_devices: 20                 # most cameras this server accepts
+
+search:
+  # A photo younger than this counts as the "current" view (SPEC AC-03).
+  # With a slow camera (e.g. every 15 min) the window grows automatically.
+  current_window_seconds: 120
+
+# How the server says WHERE something is. Works in any room with no setup:
+#   mode: auto  -> 1) zones drawn for that camera on /zones (optional)
+#                  2) Gemini's own words: "on the desk next to the laptop"
+#                  3) position in the picture: "in the bottom-left of the camera view"
+#   mode: zones -> only zones
+location:
+  mode: auto
+
+# The seven key objects (SPEC 4.3). Gemini also finds other items when
+# detect_all_objects is true.
+#  hint    : what Gemini should look for (describe what YOUR item looks like)
+#  aliases : words a user may type in a question
+objects:
+  glasses:
+    display: "glasses"
+    plural: true
+    hint: "glasses (also sunglasses or a glasses case)"
+    aliases: ["glasses", "eyeglasses", "spectacles", "specs", "glasses case"]
+  wallet:
+    display: "wallet"
+    plural: false
+    hint: "wallet (also a card holder or purse)"
+    aliases: ["wallet", "purse", "card holder"]
+  card:
+    display: "card"
+    plural: false
+    hint: "card (credit, debit, student ID or transit card)"
+    aliases: ["card", "id card", "student card", "student id", "credit card", "bank card", "transit card", "t money card", "debit card"]
+  earphones:
+    display: "earphones"
+    plural: true
+    hint: "earphones (earbuds, AirPods or their charging case, wired earphones, headphones)"
+    aliases: ["earphones", "earphone", "ear phones", "earbuds", "earbud", "airpods", "galaxy buds", "headphones", "earphone case", "airpods case", "airpod", "air pods", "air pod", "earpods", "earpod", "buds", "earbuds case"]
+  phone:
+    display: "phone"
+    plural: false
+    hint: "phone (any smartphone)"
+    aliases: ["phone", "cellphone", "cell phone", "mobile", "mobile phone", "smartphone", "iphone", "galaxy", "phone case"]
+  charger:
+    display: "charger"
+    plural: false
+    hint: "charger (charging cable, power adapter, power bank)"
+    aliases: ["charger", "phone charger", "charging cable", "charger cable", "adapter", "power adapter", "power bank"]
+  hairtie:
+    display: "hair tie"
+    plural: false
+    hint: "hair tie (scrunchie, hair elastic)"
+    aliases: ["hair tie", "hairtie", "hair band", "hairband", "scrunchie", "hair elastic", "hair ring"]
+
+# Words that could mean more than one object -> the system asks you to clarify (SPEC 6.2).
+ambiguous_terms:
+  cable: ["charger", "earphones"]
+  case: ["glasses", "earphones", "phone"]
+  cord: ["charger", "earphones"]
+
+# Different names for the SAME kind of item. Gemini may call one thing "face mask" in one
+# photo and "facial mask" or "mask" in the next; every name on a line is saved and searched
+# as the first name. Add your own lines (lowercase). Plurals and spaces are handled
+# automatically ("masks", "facemask").
+same_items:
+  face mask: [mask, facial mask, surgical mask, medical mask, kf94 mask, kf94, kf80 mask, n95 mask,
+              dust mask, disposable mask, cloth mask, protective mask]
+  bag charm: [charm, tassel charm, keychain charm, bag pendant]
+  cap: [baseball cap]
+  tote bag: [canvas bag, canvas tote, cloth tote, tote]
+  water bottle: [drink bottle, drinking bottle, plastic bottle, reusable bottle]
+  cup: [mug, coffee cup, coffee mug]
+  keys: [key, car keys, car key, house keys, house key, key ring]
+  notebook: [notepad, note book]
+  tablet: [ipad]
+  pen: [ballpoint pen, ballpen]
+  remote control: [remote, tv remote]
+  sign: [signboard, sign board, tabletop sign, table sign, desk sign, name sign, nameplate, name plate, placard, sign stand]
+
+# Example zones — used ONLY with location.mode: zones.
+# In auto mode, draw zones for each camera on the /zones page instead (optional).
+zones:
+  - name: desk
+    label: "on the desk"
+    polygon: [[0.05, 0.55], [0.45, 0.55], [0.45, 0.95], [0.05, 0.95]]
+  - name: bed
+    label: "on the bed"
+    polygon: [[0.50, 0.45], [0.98, 0.45], [0.98, 0.98], [0.50, 0.98]]
+
+fallback_location: "in the room, outside the marked areas"

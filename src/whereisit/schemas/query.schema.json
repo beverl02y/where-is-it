@@ -1,10 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Version 2.1. Matches entities.Query in ontology.yaml (mini-ontology v2.1) and SPEC v2.1 §4.2 #3, §5.1. The v2.1 rule parser (parse_query_en.md) produces these fields in code (ParsedQuery + search.py); questionType, urgency, checkedPlaces and lastUsedPlace are deferred (SPEC §4.4) and only a future LLM parser may fill them.",
   "title": "ParseResult",
-  "description": "Where-Is-It: structured result of parsing the user's item-finding utterance — one Query per item (Lecture 3 deliverable)",
+  "description": "Where-Is-It AI: structured result of parsing one user question. One Query per requested item, in the order mentioned. A question outside the service (SPEC §4.2 #12: commands, distances, chatbot tasks, body parts or people, instructions that name no item) produces no ParseResult; it is answered with a fixed Response.",
   "type": "object",
   "properties": {
-    "queries": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/Query"}, "description": "One Query per item, in the order mentioned"}
+    "queries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/Query"},
+      "description": "One Query per requested item, in the order mentioned. Several items joined by \"and\", \",\", \"&\", \"+\", \"plus\", \"이랑\", \"랑\" or \"하고\" give several Queries when every part names an item; describing words joined by \"and\" (\"black and white wallet\") stay in one Query. Two items not joined this way (\"phone wallet\") give one Query whose item is ambiguous, answered with clarify."
+    }
   },
   "required": ["queries"],
   "additionalProperties": false,
@@ -12,14 +18,56 @@
     "Query": {
       "type": "object",
       "properties": {
-        "questionText": {"type": "string", "minLength": 1, "description": "Original utterance, verbatim"},
-        "objectName": {"type": ["string", "null"], "minLength": 1, "description": "Item words exactly as said. null if no item name"},
-        "questionType": {"type": "string", "enum": ["current_location", "last_seen", "disappeared_when", "nearby_context", "where_to_look"], "description": "Allowed values only. Omit if unclear"},
-        "urgency": {"type": "string", "enum": ["high", "low"], "description": "Omit if not expressed"},
-        "checkedPlaces": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true, "description": "Places already searched, as said. Omit if none"},
-        "lastUsedPlace": {"type": "string", "minLength": 1, "description": "Where last used or left, as said. Omit if none"}
+        "questionText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Original wording, unchanged (no summary, translation or spelling correction). For a question with several items, the part of the question for this item. The whole question is limited to 1-300 characters (SPEC §5.1)."
+        },
+        "objectName": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "description": "The one item this Query asks about; null when no item is identifiable (placeholder words such as \"thing\", \"stuff\", \"it\" are not items). A stated typing-slip correction (\"glases\" -> glasses) is allowed; never substitute a different item."
+        },
+        "descriptors": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true,
+          "description": "Colour, size and shape words from the question (\"black\", \"big\"), used to choose among items of the same kind. Optional; may be empty."
+        },
+        "lang": {
+          "type": "string",
+          "enum": ["en", "ko"],
+          "description": "Language of the question: ko when it contains Hangul, otherwise en. The answer uses the same language."
+        },
+        "limitationRequest": {
+          "type": "boolean",
+          "description": "True when the question asks for an exact disappearance time or who or what moved the item, so the answer explains the limitation. Optional (not yet produced by the v2.1 code: SPEC Known Gap 1)."
+        },
+        "questionType": {
+          "type": "string",
+          "enum": ["current_location", "last_seen", "disappeared_when", "nearby_context", "where_to_look"],
+          "description": "Deferred (SPEC §4.4). Omit unless a future LLM parser fills it."
+        },
+        "urgency": {
+          "type": "string",
+          "enum": ["high", "low"],
+          "description": "Deferred (SPEC §4.4). Omit unless a future LLM parser fills it."
+        },
+        "checkedPlaces": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Deferred (SPEC §4.4). Places the user says they already searched, as said. Never used as a camera observation."
+        },
+        "lastUsedPlace": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Deferred (SPEC §4.4). Where the user says they last used or left it, as said. Never used as a camera observation."
+        }
       },
-      "required": ["questionText", "objectName"],
+      "required": ["questionText", "objectName", "lang"],
       "additionalProperties": false
     }
   }

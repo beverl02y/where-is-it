@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>where-is-it AI Camera</title>
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3.5 10.5V8A4.5 4.5 0 0 1 8 3.5h2.5M21.5 3.5H24A4.5 4.5 0 0 1 28.5 8v2.5M28.5 21.5V24a4.5 4.5 0 0 1-4.5 4.5h-2.5M10.5 28.5H8A4.5 4.5 0 0 1 3.5 24v-2.5' fill='none' stroke='%2313213d' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M16 23c-3-3.4-4.6-6-4.6-8.7a4.6 4.6 0 0 1 9.2 0c0 2.7-1.6 5.3-4.6 8.7ZM16 12.6a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4Z' fill='%23f2a33a' fill-rule='evenodd'/%3E%3C/svg%3E">
+<style>
+  /* Colours from the new design (navy + blue). The old names (--accent, --bad …) are kept so the page code still works. */
+  :root {
+    --ink: #0d1b2e; --muted: #55637a; --navy: #0f2a5f; --navy-hover: #17397d; --blue: #2c63e0;
+    --tint: #f3f6fc; --tint-strong: #e6edfb; --line: #dbe3f0; --white: #ffffff; --red: #a32626; --red-bg: #fbe9e9;
+    --bg: var(--white); --card: var(--tint); --accent: var(--navy); --bad: var(--red); --chip: var(--tint-strong);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--white); color: var(--ink); font-size: 16px; line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 0 24px 48px; }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  .brand { display: flex; align-items: center; gap: 10px; padding: 20px 0; color: var(--navy); font-weight: 700; text-decoration: none; }
+  .brand svg { width: 30px; height: 30px; flex: none; }
+  .wordmark { font-weight: 800; letter-spacing: -0.02em; color: #13213d; white-space: nowrap; }
+  .wordmark .dash { color: #f2a33a; }
+  .wordmark .ai { display: inline-block; margin-left: 2px; padding: 0 5px; border: 1.5px solid #13213d; border-radius: 5px; font-size: 0.75em; line-height: 1.4; vertical-align: 1px; letter-spacing: 0; }
+
+  h1 { margin: 12px 0 8px; font-size: clamp(1.75rem, 5vw, 2.5rem); line-height: 1.15; letter-spacing: -0.03em; font-weight: 800; }
+  h2 { margin: 0 0 12px; font-size: 1.125rem; letter-spacing: -0.015em; }
+  h2::before { content: ""; display: block; width: 44px; height: 3px; margin-bottom: 12px; background: var(--blue); }
+  .sub { margin: 0 0 20px; color: var(--muted); font-size: 1.0625rem; }
+  .card { margin-top: 16px; padding: 24px; background: var(--tint); border-radius: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .muted, #last { color: var(--muted); font-size: 0.9375rem; }
+
+  input, select, textarea {
+    font: inherit; min-height: 48px; padding: 10px 14px; color: var(--ink);
+    background: var(--white); border: 1.5px solid #b5c2d6; border-radius: 8px;
+  }
+  input { flex: 1; min-width: 0; }
+  input::placeholder, textarea::placeholder { color: #6b788c; }
+  input:focus, select:focus, textarea:focus { outline: 3px solid rgba(44, 99, 224, 0.3); border-color: var(--blue); }
+
+  button {
+    font: inherit; min-height: 48px; padding: 10px 18px; border: 1.5px solid var(--navy); border-radius: 8px;
+    background: var(--navy); color: var(--white); font-weight: 600; cursor: pointer;
+  }
+  button:hover { background: var(--navy-hover); border-color: var(--navy-hover); }
+  button:disabled { opacity: 0.55; cursor: not-allowed; }
+  button.ghost { background: var(--white); color: var(--navy); }
+  button.ghost:hover { background: var(--tint-strong); border-color: var(--navy); }
+  button.danger { background: var(--white); color: var(--red); border-color: var(--red); }
+  button.danger:hover { background: var(--red-bg); }
+  button.small { min-height: 32px; padding: 4px 12px; font-size: 0.85rem; }
+
+  .err { color: var(--red); }
+  .hidden { display: none; }
+  ul, ol { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size: 0.9375rem; }
+  details summary { cursor: pointer; }
+  b { color: var(--navy); }
+</style>
+<style>
+  /* ---------- Scan screen ---------- */
+  /* The box takes the shape of the picture (wide or tall); JS sets aspect-ratio once the camera runs */
+  .viewer { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 78vh; overflow: hidden; background: #000; border-radius: 12px; }
+  /* "contain" shows the WHOLE photo that is sent to the AI (nothing is cut off) */
+  .viewer video { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .viewer-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; padding: 24px;
+                  color: #c9d4ea; text-align: center; pointer-events: none; }
+  .viewer-empty b { color: var(--white); }
+  body.running .viewer-empty { display: none; }
+  .viewer-bar { position: absolute; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: space-between; gap: 12px;
+                padding: 12px 14px; background: linear-gradient(transparent, rgba(0, 0, 0, 0.7)); color: var(--white); font-size: 0.875rem; font-weight: 600; }
+  body.running .viewer-bar { display: flex; }
+  #livestatus { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #livestatus::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 8px; border-radius: 50%; background: #39d98a; }
+  .stop-on-video { flex: none; min-width: 96px; background: var(--red); border-color: var(--red); }
+  .stop-on-video:hover { background: #861e1e; border-color: #861e1e; }
+
+  /* Once the camera runs, JS sets --ar (video width / height). The box matches that shape exactly:
+     as wide as possible, but never taller than 78vh (then it gets narrower and is centred), so no black bars. */
+  .viewer.fit { width: min(100%, calc(78vh * var(--ar))); height: auto; aspect-ratio: var(--ar); max-height: none; margin: 0 auto; }
+  /* Phone held upright, camera not running yet: a tall scan screen */
+  @media (orientation: portrait) and (max-width: 800px) {
+    main { padding: 0 12px 40px; }
+    .viewer:not(.fit) { aspect-ratio: auto; height: 72vh; }
+  }
+  /* Phone turned sideways: while the camera runs, the scan screen fills the whole screen */
+  @media (orientation: landscape) and (max-height: 600px) {
+    .viewer { aspect-ratio: auto; height: 85vh; }
+    body.running { overflow: hidden; }
+    body.running .viewer { position: fixed; inset: 0; z-index: 100; width: 100%; height: 100%; max-height: none; margin: 0; border-radius: 0; }
+  }
+  #status { font-weight: 600; }
+  .who { font-weight: 600; color: var(--navy); }
+  .link { margin: 8px 0; padding: 10px; background: var(--white); border: 1px solid var(--line); border-radius: 8px;
+          font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8rem; word-break: break-all; }
+  .bigid { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.125rem; font-weight: 700; letter-spacing: 0.04em; color: var(--navy); }
+  .bigid.err { color: var(--red); }
+  /* Camera ID + PIN strip at the top */
+  .idbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 28px; margin: 0 0 16px; padding: 10px 16px; background: var(--tint); border-radius: 10px; }
+  .idbar .label { color: var(--muted); font-size: 0.8125rem; margin-right: 8px; }
+  .idbar > div { display: flex; align-items: center; }
+  button.eye { display: inline-flex; align-items: center; justify-content: center; width: 32px; min-height: 32px; margin-left: 6px; padding: 0; border: 0; background: none; color: var(--muted); }
+  button.eye:hover { background: var(--tint-strong); color: var(--navy); border: 0; }
+  button.eye svg { width: 18px; height: 18px; }
+  button.eye[hidden], button.eye svg[hidden] { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <a class="brand" href="./">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M3.5 10.5V8A4.5 4.5 0 0 1 8 3.5h2.5M21.5 3.5H24A4.5 4.5 0 0 1 28.5 8v2.5M28.5 21.5V24a4.5 4.5 0 0 1-4.5 4.5h-2.5M10.5 28.5H8A4.5 4.5 0 0 1 3.5 24v-2.5" fill="none" stroke="#13213d" stroke-width="3" stroke-linecap="round"/>
+      <path d="M16 23c-3-3.4-4.6-6-4.6-8.7a4.6 4.6 0 0 1 9.2 0c0 2.7-1.6 5.3-4.6 8.7ZM16 12.6a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4Z" fill="#f2a33a" fill-rule="evenodd"/>
+    </svg>
+    <span class="wordmark" aria-label="where-is-it AI">where<span class="dash">-</span>is<span class="dash">-</span>it <span class="ai">AI</span></span>
+  </a>
+  <h1>Camera</h1>
+
+  <!-- 1. First time on this phone: set it up as a camera -->
+  <section id="setup" class="hidden">
+    <p class="sub">Set up this phone as the camera for <b>your</b> room. Its records are kept separate from every other camera.</p>
+    <div class="card">
+      <h2>Set up this camera</h2>
+      <div class="row"><input id="name" maxlength="40" placeholder="Room name, e.g. Lae's room" aria-label="Room name"></div>
+      <div class="row" style="margin-top:8px"><input id="invite" placeholder="Invite code (from the person who runs the server)" aria-label="Invite code"></div>
+      <div class="row" style="margin-top:8px"><input id="pin" inputmode="numeric" maxlength="6" placeholder="Choose a PIN (4–6 digits)" aria-label="PIN"></div>
+      <p class="muted" style="margin:6px 0 0">You’ll connect your own phone with this camera’s ID and this PIN.</p>
+      <div class="row" style="margin-top:8px"><button id="register">Set up</button></div>
+      <div id="setupmsg" class="muted" style="margin-top:6px"></div>
+    </div>
+  </section>
+
+  <!-- 2. Set up: the camera itself -->
+  <section id="camera" class="hidden">
+    <p class="sub">Camera for <span class="who" id="who"></span>. seperate room, seperate records.</p>
+    <div class="idbar">
+      <div><span class="label">Camera ID</span><span class="bigid" id="camid"></span></div>
+      <div><span class="label">PIN</span><span class="bigid" id="pinstate"></span>
+      <button type="button" class="ghost eye" id="pineye" aria-label="Show PIN" aria-pressed="false" hidden>
+        <svg id="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg id="eye-shut" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M2 12s3.6-7 10-7c2 0 3.8.7 5.2 1.7M22 12s-3.6 7-10 7c-2 0-3.8-.7-5.2-1.7"/><path d="M9.9 14.1a3 3 0 0 0 4.2-4.2"/><path d="M3 3l18 18"/></svg>
+      </button>
+      </div>
+    </div>
+    <div class="viewer" id="viewer">
+      <video id="video" autoplay playsinline muted></video>
+      <p class="viewer-empty"><span>Press <b>Start camera</b> below. You can hold the phone upright or sideways.</span></p>
+      <div class="viewer-bar">
+        <span id="livestatus">Camera on</span>
+        <button type="button" class="stop-on-video" id="stop2">Stop</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <select id="interval" aria-label="Interval">
+          <option value="10">every 10 s (live demo)</option>
+          <option value="20">every 20 s</option>
+          <option value="60">every 1 min</option>
+          <option value="300">every 5 min</option>
+          <option value="600">every 10 min</option>
+          <option value="900" selected>every 15 min (lowest cost)</option>
+        </select>
+        <button id="start">Start camera</button>
+        <button id="stop" class="ghost" disabled>Stop</button>
+        <button id="snap" class="ghost" disabled>Save test photo</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="status">Not started</div>
+      <div id="last"></div>
+      <ul>
+        <li>Keep the phone plugged in and this page open in front. The screen stays on while sending.</li>
+        <li>Keep the phone in one position.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>PIN and room link</h2>
+      <div class="row">
+        <input id="newpin" inputmode="numeric" maxlength="6" placeholder="New PIN (4–6 digits)" aria-label="New PIN">
+        <button id="setpin" class="ghost">Set PIN</button>
+      </div>
+      <p class="muted" style="margin:6px 0 0">Changing the PIN disconnects phones that used the old one.</p>
+      <div id="pinmsg" class="muted" style="margin-top:6px"></div>
+
+      <details style="margin-top:12px">
+        <summary class="muted">Or use the room link instead</summary>
+        <div class="link" id="roomlink"></div>
+        <div class="row">
+          <button id="copy" class="ghost">Copy</button>
+          <button id="share" class="ghost">Share…</button>
+          <button id="open" class="ghost">Open here</button>
+          <button id="reset" class="danger">New link (old one stops working)</button>
+        </div>
+        <div id="linkmsg" class="muted" style="margin-top:6px"></div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>This camera</h2>
+      <p class="muted" style="margin:0" id="devinfo"></p>
+      <div class="row" style="margin-top:8px"><button id="remove" class="danger">Remove this camera and all its records</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+let cam = { token: store.get("wiia_cam_token"), room: store.get("wiia_cam_room"), id: store.get("wiia_cam_id"), name: store.get("wiia_cam_name"), hasPin: store.get("wiia_cam_haspin") === "1", pin: store.get("wiia_cam_pin") };
+let pinShown = false, pinHideTimer = null;
+let stream = null, timer = null, wakeLock = null, busy = false, sent = 0;
+const canvas = document.createElement("canvas");
+
+function setStatus(text, err = false) { $("status").textContent = text; $("status").className = err ? "err" : ""; $("livestatus").textContent = text; }
+function roomLink() { return cam.room ? new URL("./", location.href).href + "#room=" + encodeURIComponent(cam.room) : ""; }
+const camHeaders = () => ({ "X-Camera-Token": cam.token });
+
+function show() {
+  const ready = !!cam.token;
+  $("setup").classList.toggle("hidden", ready);
+  $("camera").classList.toggle("hidden", !ready);
+  if (!ready) return;
+  $("who").textContent = cam.name || "this room";
+  $("roomlink").textContent = roomLink() || "(not available on this phone — press “New link”)";
+  $("devinfo").textContent = `Name: ${cam.name} · Camera ID: ${cam.id}`;
+  $("camid").textContent = cam.id;
+  renderPin();
+  if ($("siteaddr")) $("siteaddr").textContent = new URL("./", location.href).host;
+  let iv = store.get("wiia_interval") || "900";
+  $("interval").value = iv;
+  if (!$("interval").value) $("interval").value = "900";
+}
+
+// ---------- set-up ----------
+$("register").onclick = async () => {
+  const name = $("name").value.trim();
+  const pin = $("pin").value.trim();
+  if (!name) return ($("setupmsg").textContent = "Type a room name first.");
+  if (!/^\d{4,6}$/.test(pin)) return ($("setupmsg").textContent = "Choose a PIN of 4–6 digits.");
+  $("register").disabled = true;
+  try {
+    const res = await fetch("api/devices/register", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, invite_code: $("invite").value.trim(), pin }) });
+    const r = await res.json().catch(() => ({}));
+    if (!res.ok) { $("setupmsg").textContent = r.detail || `Set-up failed (${res.status})`; return; }
+    cam = { token: r.camera_token, room: r.room_key, id: r.device.id, name: r.device.name, hasPin: true, pin };
+    store.set("wiia_cam_pin", pin);
+    store.set("wiia_cam_token", cam.token); store.set("wiia_cam_room", cam.room);
+    store.set("wiia_cam_id", cam.id); store.set("wiia_cam_name", cam.name); store.set("wiia_cam_haspin", "1");
+    show();
+    $("pinmsg").textContent = "Set up! Note the camera ID above, then connect your own phone with it and your PIN.";
+  } catch (e) { $("setupmsg").textContent = `Can't reach the server (${e.message}).`; }
+  finally { $("register").disabled = false; }
+};
+
+function forgetCamera(message) {
+  stop();
+  ["wiia_cam_token", "wiia_cam_room", "wiia_cam_id", "wiia_cam_name", "wiia_cam_haspin", "wiia_cam_pin"].forEach(store.del);
+  cam = { token: "", room: "", id: "", name: "", hasPin: false, pin: "" };
+  show();
+  $("setupmsg").textContent = message;
+}
+
+// ---------- PIN ----------
+$("setpin").onclick = async () => {
+  const pin = $("newpin").value.trim();
+  if (!/^\d{4,6}$/.test(pin)) return ($("pinmsg").textContent = "The PIN must be 4–6 digits.");
+  const res = await fetch("api/camera/pin", { method: "POST", headers: { ...camHeaders(), "Content-Type": "application/json" }, body: JSON.stringify({ pin }) });
+  if (res.status === 401) return forgetCamera("This camera was removed. Set it up again.");
+  if (!res.ok) return ($("pinmsg").textContent = `Could not set the PIN (${res.status}).`);
+  cam.hasPin = true; cam.pin = pin; store.set("wiia_cam_haspin", "1"); store.set("wiia_cam_pin", pin); $("newpin").value = ""; show();
+  $("pinmsg").textContent = "PIN saved. Connect your phone with the camera ID and this PIN.";
+};
+
+// The server keeps only a hash of the PIN, so this phone remembers the PIN it set,
+// and the eye button shows it (hidden again after 10 seconds).
+function renderPin() {
+  const el = $("pinstate");
+  if (!cam.hasPin) { el.textContent = "not set"; el.className = "bigid err"; $("pineye").hidden = true; return; }
+  el.className = "bigid";
+  el.textContent = pinShown && cam.pin ? cam.pin : "•".repeat(cam.pin ? cam.pin.length : 4);
+  $("pineye").hidden = false;
+  $("pineye").setAttribute("aria-pressed", String(pinShown));
+  $("pineye").setAttribute("aria-label", pinShown ? "Hide PIN" : "Show PIN");
+  $("eye-open").toggleAttribute("hidden", pinShown);    // SVG elements have no .hidden property
+  $("eye-shut").toggleAttribute("hidden", !pinShown);
+}
+$("pineye").onclick = () => {
+  if (!cam.pin) {
+    $("pinmsg").textContent = "This phone doesn't know the PIN (it was set before this update or on another phone). Set a new PIN below and you can see it here.";
+    return;
+  }
+  pinShown = !pinShown;
+  clearTimeout(pinHideTimer);
+  if (pinShown) pinHideTimer = setTimeout(() => { pinShown = false; renderPin(); }, 10000);
+  renderPin();
+};
+
+// ---------- room link ----------
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(roomLink()); $("linkmsg").textContent = "Copied."; }
+  catch { $("linkmsg").textContent = "Long-press the link above to copy it."; }
+};
+$("share").onclick = async () => {
+  if (navigator.share) { try { await navigator.share({ title: `where-is-it AI — ${cam.name}`, url: roomLink() }); } catch {} }
+  else $("linkmsg").textContent = "Sharing isn't available here — use Copy.";
+};
+$("open").onclick = () => { if (roomLink()) window.open(roomLink(), "_blank"); };
+
+function twoStep(btn, label, action) {
+  let armed = false, t;
+  btn.onclick = async () => {
+    if (!armed) { armed = true; const old = btn.textContent; btn.textContent = label; t = setTimeout(() => { armed = false; btn.textContent = old; }, 4000); return; }
+    clearTimeout(t); armed = false; await action();
+  };
+}
+twoStep($("reset"), "Tap again to make a new link", async () => {
+  const res = await fetch("api/camera/room-key", { method: "POST", headers: camHeaders() });
+  if (res.status === 401) return forgetCamera("This camera was removed. Set it up again.");
+  const r = await res.json();
+  cam.room = r.room_key; store.set("wiia_cam_room", cam.room); show();
+  $("linkmsg").textContent = "New link made. The old link no longer works — send this one to your phone.";
+});
+twoStep($("remove"), "Tap again to delete everything", async () => {
+  const res = await fetch("api/camera", { method: "DELETE", headers: camHeaders() });
+  if (res.ok || res.status === 401) forgetCamera("Camera removed together with all its records.");
+});
+
+// ---------- camera ----------
+async function keepAwake() {
+  try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch {}
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && stream) keepAwake(); });
+
+// ---------- picture shape ----------
+// Turning the phone/iPad turns the camera picture by itself (wide or tall).
+// The scan screen takes the same shape, so the whole picture is shown without big black bars.
+function layoutVideo() {
+  const v = $("video");
+  if (!v.videoWidth) return;
+  $("viewer").style.setProperty("--ar", v.videoWidth / v.videoHeight);
+  $("viewer").classList.add("fit");
+}
+$("video").addEventListener("loadedmetadata", layoutVideo);
+$("video").addEventListener("resize", layoutVideo);   // fires when the device is turned and the picture changes shape
+store.del("wiia_rotation");   // setting from the old Rotate button, no longer used
+
+function grab() {
+  const v = $("video");
+  if (!v.videoWidth) return null;
+  // the photo has the same shape as the picture: wide when the device is sideways, tall when upright
+  canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+  canvas.getContext("2d").drawImage(v, 0, 0);
+  return new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85));
+}
+
+async function sendFrame() {
+  if (busy) return;
+  busy = true;
+  try {
+    const blob = await grab();
+    if (!blob) return;
+    const form = new FormData();
+    form.append("file", blob, "frame.jpg");
+    form.append("captured_at", new Date().toISOString());
+    form.append("interval_s", $("interval").value);
+    const t0 = performance.now();
+    const res = await fetch("api/frames", { method: "POST", headers: camHeaders(), body: form });
+    if (res.status === 401) return forgetCamera("This camera was removed or is no longer set up. Set it up again.");
+    if (res.status === 503) {
+      let detail = "AI detection unavailable";
+      try { detail = (await res.json()).detail || detail; } catch {}
+      setStatus(`${detail} — will retry with the next photo.`, true);
+      return;
+    }
+    if (!res.ok) throw new Error(`server error ${res.status}`);
+    const r = await res.json();
+    sent++;
+    const found = r.detections.map((d) => `${d.appearance || d.object} ${d.location} ${Math.round(d.confidence * 100)}%${d.confirmed ? "" : " (unconfirmed)"}`).join(", ") || "nothing";
+    const iv = Number($("interval").value);
+    const next = iv >= 60 ? ` · next photo at ${new Date(Date.now() + iv * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}` : "";
+    setStatus(`Sending — ${sent} photo${sent === 1 ? "" : "s"} sent${next}`);
+    $("last").textContent = `${new Date().toLocaleTimeString()}: ${found} (${Math.round(performance.now() - t0)} ms)`;
+  } catch (e) {
+    setStatus(`Can't reach the server (${e.message}). Retrying…`, true);
+  } finally { busy = false; }
+}
+
+async function start() {
+  store.set("wiia_interval", $("interval").value);
+  if (!navigator.mediaDevices?.getUserMedia) { setStatus("This browser can't use the camera here. Open the page over https://.", true); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false,
+    });
+  } catch (e) { setStatus(`Camera permission denied or unavailable (${e.name}).`, true); return; }
+  $("video").srcObject = stream;
+  await keepAwake();
+  $("start").disabled = true; $("stop").disabled = false; $("snap").disabled = false;
+  document.body.classList.add("running");   // shows the Stop button on the scan screen
+  setStatus("Starting…");
+  setTimeout(sendFrame, 1500);
+  timer = setInterval(sendFrame, Number($("interval").value) * 1000);
+}
+
+function stop() {
+  clearInterval(timer); timer = null;
+  if (stream) stream.getTracks().forEach((t) => t.stop());
+  stream = null;
+  try { wakeLock && wakeLock.release(); } catch {}
+  $("start").disabled = false; $("stop").disabled = true; $("snap").disabled = true;
+  document.body.classList.remove("running");
+  $("viewer").classList.remove("fit");   // back to the default box until the camera runs again
+  if (!$("status").classList.contains("err")) setStatus(`Stopped — ${sent} photo${sent === 1 ? "" : "s"} sent`);
+}
+
+async function snapshot() {
+  const blob = await grab();
+  if (!blob) return;
+  const form = new FormData();
+  form.append("file", blob, "photo.jpg");
+  try {
+    const res = await fetch("api/test-photos", { method: "POST", headers: camHeaders(), body: form });
+    if (!res.ok) throw new Error(`server error ${res.status}`);
+    const r = await res.json();
+    $("last").textContent = `Saved test photo ${r.saved} (${r.total} saved in total)`;
+  } catch (e) { setStatus(`Could not save the test photo (${e.message})`, true); }
+}
+
+$("start").addEventListener("click", start);
+$("stop").addEventListener("click", stop);
+$("stop2").addEventListener("click", stop);
+$("snap").addEventListener("click", snapshot);
+
+// Confirm the stored camera still exists (it may have been removed by the admin).
+(async () => {
+  show();
+  if (!cam.token) return;
+  try {
+    const res = await fetch("api/camera", { headers: camHeaders() });
+    if (res.status === 401) return forgetCamera("This camera was removed. Set it up again.");
+    const r = await res.json();
+    cam.name = r.device.name; store.set("wiia_cam_name", cam.name);
+    cam.hasPin = !!r.device.has_pin; store.set("wiia_cam_haspin", cam.hasPin ? "1" : "0");
+    if (!cam.hasPin) { cam.pin = ""; store.del("wiia_cam_pin"); }
+    show();
+    if (!cam.hasPin) $("pinmsg").textContent = "Set a PIN so you can connect your phone with the camera ID.";
+  } catch {}
+})();
+</script>
+</body>
+</html>
