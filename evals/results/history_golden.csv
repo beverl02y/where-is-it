@@ -1,0 +1,4 @@
+run_id,change,scope,golden_file,app_code,result,failed_checks
+2026-11-13T052216,Golden Test Result,golden cases,tests/harness/golden_cases.yaml (963b3c0),fe63ab1,10/10 passed,
+2026-11-13T071207,Golden Test Result,golden cases,tests/harness/golden_cases.yaml (716e43a),fe63ab1,13/16 passed,test_golden_cases::test_record_selection[gc_06_same_time_conflicting_locations]; test_golden_cases::test_user_answer[gc_05_newest_record_below_threshold]; test_golden_cases::test_user_answer[gc_06_same_time_conflicting_locations]
+2026-11-13T071308,Golden Test Result,golden cases,tests/harness/golden_cases.yaml (963b3c0),fe63ab1,10/10 passed,

@@ -1,0 +1,78 @@
+{
+  "run_id": "2026-11-13T071308",
+  "change": "Golden Test Result",
+  "scope": "golden cases",
+  "golden_file": "tests/harness/golden_cases.yaml (963b3c0)",
+  "app_code": "fe63ab1",
+  "result": "10/10 passed",
+  "passed": 10,
+  "failed": 0,
+  "total": 10,
+  "pytest": "10 passed in 0.75s",
+  "checks": [
+    {
+      "test": "test_golden_cases::test_golden_file_is_valid",
+      "result": "pass"
+    },
+    {
+      "test": "test_golden_cases::test_server_threshold_matches_golden",
+      "result": "pass"
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_01_latest_reliable_history]",
+      "result": "pass",
+      "case": "gc_01_latest_reliable_history",
+      "expect_record": "wallet-latest",
+      "note": "AC-05. Select the latest reliable Wallet sighting, not the highest-confidence record or the newer sighting of another object. The result is historical evidence, not confirmation that the wallet is on the bed now."
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_02_phone_exactly_75_percent]",
+      "result": "pass",
+      "case": "gc_02_phone_exactly_75_percent",
+      "expect_record": "phone-boundary",
+      "note": "SPEC 4.3, AC-05, 6.2 and 6.3. Phone is included in the supported object list. The minimum confirmed confidence is inclusive: 0.75 qualifies."
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_03_below_75_percent]",
+      "result": "pass",
+      "case": "gc_03_below_75_percent",
+      "expect_record": null,
+      "note": "AC-05, 6.2 and 6.3. A raw score of 0.749 is below 0.75, so it cannot confirm a sighting. There is no other reliable history. Return null/None without rounding the score up or confirming the sofa."
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_04_no_records]",
+      "result": "pass",
+      "case": "gc_04_no_records",
+      "expect_record": null,
+      "note": "AC-05 and 6.2. No historical evidence is available. Return null/None rather than inventing a location, timestamp, or confidence. This does not prove that the earphones are absent from the room."
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_01_latest_reliable_history]",
+      "result": "pass",
+      "case": "gc_01_latest_reliable_history",
+      "expect_record": "wallet-latest",
+      "note": "AC-05. Select the latest reliable Wallet sighting, not the highest-confidence record or the newer sighting of another object. The result is historical evidence, not confirmation that the wallet is on the bed now."
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_02_phone_exactly_75_percent]",
+      "result": "pass",
+      "case": "gc_02_phone_exactly_75_percent",
+      "expect_record": "phone-boundary",
+      "note": "SPEC 4.3, AC-05, 6.2 and 6.3. Phone is included in the supported object list. The minimum confirmed confidence is inclusive: 0.75 qualifies."
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_03_below_75_percent]",
+      "result": "pass",
+      "case": "gc_03_below_75_percent",
+      "expect_record": null,
+      "note": "AC-05, 6.2 and 6.3. A raw score of 0.749 is below 0.75, so it cannot confirm a sighting. There is no other reliable history. Return null/None without rounding the score up or confirming the sofa."
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_04_no_records]",
+      "result": "pass",
+      "case": "gc_04_no_records",
+      "expect_record": null,
+      "note": "AC-05 and 6.2. No historical evidence is available. Return null/None rather than inventing a location, timestamp, or confidence. This does not prove that the earphones are absent from the room."
+    }
+  ]
+}

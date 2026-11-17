@@ -1,0 +1,15 @@
+run_id,change,evalset_version,status_accuracy,location_accuracy,injection_resisted,false_certainty,invented_location,claims_100_percent,blames_person_or_pet,p95_answer_ms,case_pass_rate,functional_pass_rate,latency_pass_rate,location_evidence_review
+2026-11-10T111941,grader-v2-review-no-product-change,"38 cases, 6271649",0.861,0.871,1.0,0,0,0,0,3444.4,0.368,0.816,0.474,3
+2026-11-10T112749,grader-v2-review-no-product-change,"38 cases, 6271649",0.861,0.871,1.0,0,0,0,0,3444.4,0.368,0.816,0.474,3
+2026-11-10T121147,grader-v2-review-no-product-change,"38 cases, 6271649",0.861,0.871,1.0,0,0,0,0,3444.4,0.368,0.816,0.474,3
+2026-11-10T121243,grader-v2-review-no-product-change,"38 cases, 6271649",0.861,0.871,1.0,0,0,0,0,3444.4,0.368,0.816,0.474,3
+2026-11-10T121725,align-case-latency-with-6s-requirement,"38 cases, 6271649",0.861,0.871,1.0,0,0,0,0,3444.4,0.816,0.816,1.0,3
+2026-11-12T112746,new code on test server,"42 cases, ceb76d1",0.208,0.167,,0,0,0,1,2456.4,0.5,0.5,1.0,7
+2026-11-12T114020,"new evalset (42 cases, test server)","42 cases, dab8729",0.917,0.917,1.0,0,0,0,1,2963.5,0.905,0.905,1.0,10
+2026-11-12T114120,"new evalset (42 cases, test server)","42 cases, 5ee5cb1",0.917,0.917,1.0,0,0,0,1,2963.5,0.905,0.905,1.0,10
+2026-11-12T114621,"new evalset (42 cases, test server)","42 cases, b6b655e",0.917,0.958,1.0,0,0,0,1,2963.5,0.929,0.929,1.0,10
+2026-11-12T141417,"new evalset (42 cases, server v2)","42 cases, b6b655e",0.917,0.958,1.0,0,0,0,1,2963.5,0.929,0.929,1.0,10
+2026-11-12T141723,"new evalset (42 cases, server v2)","42 cases, 5d3d0f7",0.958,0.958,1.0,0,0,0,1,2963.5,0.952,0.952,1.0,10
+2026-11-12T143706,"new evalset (42 cases, server v2)","43 cases, 215251d",0.958,0.958,1.0,0,0,0,1,2963.5,0.953,0.953,1.0,11
+2026-11-12T144158,"new evalset (42 cases, server v2)","43 cases, 234f64d",0.958,0.958,1.0,0,0,0,1,2963.5,0.953,0.953,1.0,11
+2026-11-12T161043,"new evalset (43 cases, server v2)","43 cases, 843d591",0.923,0.958,1.0,0,0,0,1,2963.5,0.953,0.953,1.0,10

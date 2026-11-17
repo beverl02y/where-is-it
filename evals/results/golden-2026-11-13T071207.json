@@ -1,0 +1,123 @@
+{
+  "run_id": "2026-11-13T071207",
+  "change": "Golden Test Result",
+  "scope": "golden cases",
+  "golden_file": "tests/harness/golden_cases.yaml (716e43a)",
+  "app_code": "fe63ab1",
+  "result": "13/16 passed",
+  "passed": 13,
+  "failed": 3,
+  "total": 16,
+  "pytest": "3 failed, 13 passed in 1.37s",
+  "checks": [
+    {
+      "test": "test_golden_cases::test_golden_file_is_valid",
+      "result": "pass"
+    },
+    {
+      "test": "test_golden_cases::test_server_threshold_matches_golden",
+      "result": "pass"
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_01_latest_reliable_history]",
+      "result": "pass",
+      "case": "gc_01_latest_reliable_history",
+      "expect_record": "wallet-latest",
+      "note": "Normal case. Select the latest reliable wallet sighting, not the highest-confidence record (wallet-older, 0.98) and not the newer sighting of another object (unrelated-glasses). The result is historical evidence, not confirmation that the wallet is on the bed now. (AC-04, AC-05)"
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_02_phone_exactly_75_percent]",
+      "result": "pass",
+      "case": "gc_02_phone_exactly_75_percent",
+      "expect_record": "phone-boundary",
+      "note": "Boundary case. The confidence equals the minimum threshold (SPEC 6.2 row 1). policy.confidence_comparison is \">=\", so 0.75 qualifies. (AC-05, 6.3)"
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_03_below_75_percent]",
+      "result": "pass",
+      "case": "gc_03_below_75_percent",
+      "expect_record": null,
+      "note": "Forbidden-behaviour case. A raw score of 0.749 is below 0.75, so it cannot confirm a sighting and there is no other reliable history (SPEC 6.2 row 3). Return None without rounding the score up. Offering the sofa as an unconfirmed `possible` answer is AC-06 and belongs to a later feature. (AC-05)"
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_04_no_records]",
+      "result": "pass",
+      "case": "gc_04_no_records",
+      "expect_record": null,
+      "note": "Boundary case. No historical evidence is available (SPEC 6.2 row 4). Return None instead of inventing a location, timestamp or confidence. This does not prove that the earphones are absent from the room. (AC-05)"
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_05_newest_record_below_threshold]",
+      "result": "pass",
+      "case": "gc_05_newest_record_below_threshold",
+      "expect_record": "charger-older-ok",
+      "note": "Forbidden-behaviour case. The newest charger record (0.60) is not reliable, so the answer is the latest QUALIFYING record, charger-older-ok (SPEC 6.2 row 2: do not confirm that candidate, search the history). The wrong answer is simply \"the latest record\". (AC-04, AC-05)"
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_06_same_time_conflicting_locations]",
+      "result": "fail",
+      "case": "gc_06_same_time_conflicting_locations",
+      "expect_record": null,
+      "note": "Forbidden-behaviour case. Two qualifying wallet records have the same capture time but different locations, so the function must not choose one arbitrarily. It must also not fall back to the older wallet-earlier record, because that would hide the conflict. Return None; explaining the conflict to the user is the job of the answer-writing feature. (AGENTS.md 3.4 and 5)",
+      "reason": "AssertionError: gc_06_same_time_conflicting_locations: selected wallet-tie-desk, expected None"
+    },
+    {
+      "test": "test_golden_cases::test_record_selection[gc_07_latest_not_first_in_list]",
+      "result": "pass",
+      "case": "gc_07_latest_not_first_in_list",
+      "expect_record": "glasses-newest",
+      "note": "Normal case. The order of the list must not matter: first-in-list (oldest), last-in-list (middle) and highest-confidence (middle) are all wrong answers. Select by capture time. (AC-05, AGENTS.md 5)"
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_01_latest_reliable_history]",
+      "result": "pass",
+      "case": "gc_01_latest_reliable_history",
+      "expect_record": "wallet-latest",
+      "note": "Normal case. Select the latest reliable wallet sighting, not the highest-confidence record (wallet-older, 0.98) and not the newer sighting of another object (unrelated-glasses). The result is historical evidence, not confirmation that the wallet is on the bed now. (AC-04, AC-05)"
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_02_phone_exactly_75_percent]",
+      "result": "pass",
+      "case": "gc_02_phone_exactly_75_percent",
+      "expect_record": "phone-boundary",
+      "note": "Boundary case. The confidence equals the minimum threshold (SPEC 6.2 row 1). policy.confidence_comparison is \">=\", so 0.75 qualifies. (AC-05, 6.3)"
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_03_below_75_percent]",
+      "result": "pass",
+      "case": "gc_03_below_75_percent",
+      "expect_record": null,
+      "note": "Forbidden-behaviour case. A raw score of 0.749 is below 0.75, so it cannot confirm a sighting and there is no other reliable history (SPEC 6.2 row 3). Return None without rounding the score up. Offering the sofa as an unconfirmed `possible` answer is AC-06 and belongs to a later feature. (AC-05)"
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_04_no_records]",
+      "result": "pass",
+      "case": "gc_04_no_records",
+      "expect_record": null,
+      "note": "Boundary case. No historical evidence is available (SPEC 6.2 row 4). Return None instead of inventing a location, timestamp or confidence. This does not prove that the earphones are absent from the room. (AC-05)"
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_05_newest_record_below_threshold]",
+      "result": "fail",
+      "case": "gc_05_newest_record_below_threshold",
+      "expect_record": "charger-older-ok",
+      "note": "Forbidden-behaviour case. The newest charger record (0.60) is not reliable, so the answer is the latest QUALIFYING record, charger-older-ok (SPEC 6.2 row 2: do not confirm that candidate, search the history). The wrong answer is simply \"the latest record\". (AC-04, AC-05)",
+      "reason": "AssertionError: 0.6 shown as [90, 60]%: The camera hasn't sent a recent image (latest at 2:00 PM today), so I can't check the current view. It was last seen on the bedside_table at 10:00 AM today (90% confidence). Possibility (not confirmed): a low-confidence detection (60%) at 2:00 PM today suggests it might be on the desk. You could check there first."
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_06_same_time_conflicting_locations]",
+      "result": "fail",
+      "case": "gc_06_same_time_conflicting_locations",
+      "expect_record": null,
+      "note": "Forbidden-behaviour case. Two qualifying wallet records have the same capture time but different locations, so the function must not choose one arbitrarily. It must also not fall back to the older wallet-earlier record, because that would hide the conflict. Return None; explaining the conflict to the user is the job of the answer-writing feature. (AGENTS.md 3.4 and 5)",
+      "reason": "AssertionError: The camera hasn't sent a recent image (latest at 12:00 PM today), so I can't check the current view. It was last seen on the desk at 12:00 PM today (90% confidence). If it isn't there now, it may have been moved, covered, or put somewhere the camera can't see, such as a bag or drawer."
+    },
+    {
+      "test": "test_golden_cases::test_user_answer[gc_07_latest_not_first_in_list]",
+      "result": "pass",
+      "case": "gc_07_latest_not_first_in_list",
+      "expect_record": "glasses-newest",
+      "note": "Normal case. The order of the list must not matter: first-in-list (oldest), last-in-list (middle) and highest-confidence (middle) are all wrong answers. Select by capture time. (AC-05, AGENTS.md 5)"
+    }
+  ]
+}
