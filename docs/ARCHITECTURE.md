@@ -17,7 +17,7 @@ The two halves run at different times. Photos are analysed **when they are uploa
 | `app/locate.py`, `app/zones.py` | Turns a detection into `location_label`: the owner's zone, else Gemini's place phrase, else the position in the picture (SPEC §4.2 #2). | — |
 | `app/db.py` | SAVE: SQLite (`data/whereisit.db`); every read and write takes the Room id. Retention clean-up after `retention_days`. | — |
 | `app/scope.py` | Questions outside the service (SPEC §4.2 #12), instructions inside questions, and splitting several joined items. | parser |
-| `app/query_parser.py`, `app/korean.py`, `app/appearance.py` | Question → `Query`: item aliases (longest first), Korean conversion, typing slips, describing words. Rule-based; the Gemini parser prompt (`src/whereisit/prompts/parse_query_en.md`, prompt_version 3) is deferred (SPEC §4.4). | Lecture 3 |
+| `app/query_parser.py`, `app/korean.py`, `app/appearance.py` | Question → `Query`: item aliases (longest first), Korean conversion, typing slips, describing words. Rule-based; the Gemini parser prompt (`src/whereisit/prompts/parse_query.md`, prompt_version 3) is deferred (SPEC §4.4). | Lecture 3 |
 | `app/search.py` | SEARCH + EXPLAIN: latest photo, then history, then possibility; same-kind items; combined answers; builds the `Response`. Verified by the retrieval golden cases (`tests/harness/golden_cases.yaml`). | Lecture 5 |
 | `app/rag.py` | Question fallback (RAG): retrieves this Room's matching records, asks Gemini, checks the answer in code. | - |
 | `app/main.py`, `app/static/index.html`, `app/static/zones.html` | API and pages: keys and roles (SPEC §5.4), ask, overview, zones, delete history, remove room. | — |

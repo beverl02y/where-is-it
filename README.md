@@ -249,7 +249,7 @@ Where this repository differs from the course's standard structure (`00_README.m
 |---|---|---|
 | `src/<package>/` (application code) | `app/` (server), `capture/` (camera client) | Moves to `src/whereisit/` after the peer-review week. |
 | `src/<package>/tools/` (lecture 6 tools) | — | The model is given no tools (`docs/ARCHITECTURE.md` §3). The root `tools/` holds operations and measurement scripts (`devices.py`, `seed_demo.py`, `evaluate.py`, `benchmark.py`, `make_label_template.py`, `gcp_https.sh`). |
-| `src/<package>/prompts/parse_query.md` | `src/whereisit/prompts/parse_query_en.md` | English prompt, prompt_version 3. The earlier Korean prompt (prompt_version 2) is in the Git history. |
+| `src/<package>/prompts/parse_query.md` | `src/whereisit/prompts/parse_query.md` | English prompt, prompt_version 3. The earlier Korean prompt (prompt_version 2) is in the Git history. |
 | `src/<package>/schemas/<class>.schema.json` | `src/whereisit/schemas/query.schema.json` | |
 | `docs/PROBLEM.md` | `docs/Problem.md` | |
 | `docs/research/interviews.md` | `docs/research/interviews_en.md`, `interviews_kr.md`, `interview_answers.md` | |

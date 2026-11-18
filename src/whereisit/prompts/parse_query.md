@@ -1,4 +1,4 @@
-# Where-Is-It AI Question Parser Prompt — parse_query_en.md
+# Where-Is-It AI Question Parser Prompt — parse_query.md
 
 | Item | Value |
 |---|---|
@@ -136,7 +136,7 @@ Expected parser output follows the prompt rules above; expected answers follow S
 ## Test Run Log — Gemini Prompt Tests (prompt_version 3, 2026-11-15)
 
 - **Model:** `gemini-3.8-flash` · one call per question, no retries · system instruction = the prompt between the markers · `response_mime_type: application/json`
-- **Prompt:** `parse_query_en.md` prompt_version 3 · SHA-256 of prompt text `fb20a7b80c4c39cd…` · run from a local copy (not yet committed); the hash equals the prompt in this file
+- **Prompt:** `parse_query.md` (then named `parse_query_en.md`) prompt_version 3 · SHA-256 of prompt text `fb20a7b80c4c39cd…` · run from a local copy (not yet committed); the hash equals the prompt in this file
 - **Schema:** `src/whereisit/schemas/query.schema.json` v2.1 · SHA-256 `5a369d69cc571a3a…` · identical to GitHub commit `0196dcf`
 - **Grading (automatic, `evals/run_parse_prompt.py`):** pure JSON → schema → questionText copied exactly and lang correct → equal to the expected Queries (questionText, objectName, descriptors, lang, limitationRequest).
 - **Not sent to the model:** #14 (length check) and #21–#24 (outside the service, instruction with no item) are handled in code before the parser.

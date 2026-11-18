@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Run the Gemini parsing prompt (parse_query_en.md) on the checklist questions and
-write a Test Run Log section to paste into parse_query_en.md.
+"""Run the Gemini parsing prompt (parse_query.md) on the checklist questions and
+write a Test Run Log section to paste into parse_query.md.
 
 Each question is sent to Gemini once (no retries), with the prompt between
 <!-- prompt:start --> and <!-- prompt:end --> as the system instruction. Each output is
@@ -47,7 +47,7 @@ def q(text, obj, lang="en", desc=None, limit=False):
 
 
 # (checklist #, question, expected Queries). Numbers follow the Failure Mode Checklist in
-# parse_query_en.md. #14 (length) and #21-#24 (outside the service / instruction with no
+# parse_query.md. #14 (length) and #21-#24 (outside the service / instruction with no
 # item) are handled in code before Gemini and are not sent to the model.
 CASES = [
     (1, "Where's my phone? It's not on the desk.", [q("Where's my phone? It's not on the desk.", "phone")]),
@@ -81,7 +81,7 @@ def read_prompt(md: Path) -> tuple[str, str]:
     m = re.search(r"<!--\s*prompt:start\s*-->\s*\n(.*?)\n\s*<!--\s*prompt:end\s*-->", text, re.S)
     if not m:
         sys.exit(f"No prompt markers found in {md}.\n"
-                 "This is probably an older parse_query_en.md without the Gemini prompt section. Download the "
+                 "This is probably an older parse_query.md without the Gemini prompt section. Download the "
                  "latest one from the chat; check with: grep -c 'prompt:start' " + str(md) + "  (should print 1)")
     v = (re.search(r"^\|\s*prompt_version\s*\|\s*(\d+)\s*\|", text, re.M)     # header table row
          or re.search(r"prompt_version (\d+)", text))
@@ -134,7 +134,7 @@ def cell(s: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", default="gemini-3.8-flash")
-    ap.add_argument("--prompt", default="src/whereisit/prompts/parse_query_en.md")
+    ap.add_argument("--prompt", default="src/whereisit/prompts/parse_query.md")
     ap.add_argument("--schema", default="src/whereisit/schemas/query.schema.json")
     ap.add_argument("--only", default="", help="comma-separated checklist numbers, e.g. 2,7,19")
     ap.add_argument("--fake", action="store_true", help="no Gemini call: answer with the expected output")

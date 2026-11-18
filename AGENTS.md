@@ -82,9 +82,9 @@ Directories
 - **Layout note:** the application code is in `app/` during the peer-review week; it moves to `src/whereisit/` (the course's standard `src/<package>/`) afterwards.
 - `docs/` — `SPEC.md`, `Problem.md`, `ontology.yaml`, `ARCHITECTURE.md`, `research/` (interview logs), `spikes/` (one file per spike), project description.
 - `config/` — `rag.yaml` (question fallback settings and their reasons).
-- `src/whereisit/prompts/` — `parse_query_en.md` (parser prompt, prompt_version 3, with its Test Run Log).
+- `src/whereisit/prompts/` — `parse_query.md` (parser prompt, prompt_version 3, with its Test Run Log).
 - `src/whereisit/schemas/` — `query.schema.json` (Query JSON form, v2.1).
 - `tests/` — application tests (`conftest.py` provides the `db`, `settings` and `engine` fixtures), plus the retrieval golden cases `harness/golden_cases.yaml` (gc_01–gc_04) run by `test_search_golden.py`.
 - `evals/` — `run_parse_prompt.py` (parser prompt test against Gemini).
 
-Progress status is not written here: `pytest -q` results and the Test Run Log in `parse_query_en.md` are the source of truth.
+Progress status is not written here: `pytest -q` results and the Test Run Log in `parse_query.md` are the source of truth.
