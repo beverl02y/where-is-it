@@ -1,0 +1,54 @@
+{
+  "_about": "Stored camera detections for the evals (= what Gemini 'saw'). Times are offsets from `now`. now = 10:00 AM in Seoul. Room A: camera working. Room B: camera stopped 2 hours ago. Room C: camera set up, no photos yet.",
+  "now": "2026-11-09T01:00:00+00:00",
+  "rooms": {
+    "A": {
+      "name": "eval room A (camera working)",
+      "interval_s": 60,
+      "frames": [
+        {"ago": "26h", "detections": [
+          {"object": "earphones", "confidence": 0.92, "location_label": "on the table next to the black backpack", "appearance": "white AirPods case", "color": "white"}
+        ]},
+        {"ago": "3h", "detections": [
+          {"object": "charger", "confidence": 0.90, "location_label": "on the desk", "appearance": "white phone charger", "color": "white"}
+        ]},
+        {"ago": "2h", "detections": [
+          {"object": "wallet", "confidence": 0.88, "location_label": "on the shelf by the door", "appearance": "black leather wallet", "color": "black"}
+        ]},
+        {"ago": "1h", "detections": [
+          {"object": "charger", "confidence": 0.55, "location_label": "on the bed"}
+        ]},
+        {"ago": "50m", "detections": [
+          {"object": "card", "confidence": 0.62, "location_label": "under the laptop"}
+        ]},
+        {"ago": "40m", "detections": [
+          {"object": "water bottle", "confidence": 0.93, "location_label": "on the desk next to the monitor", "appearance": "green water bottle", "color": "green"},
+          {"object": "laptop", "confidence": 0.95, "location_label": "on the table in front of the chair", "appearance": "silver laptop", "color": "silver"}
+        ]},
+        {"ago": "20m", "detections": [
+          {"object": "backpack", "confidence": 0.91, "location_label": "on the chair", "appearance": "black backpack", "color": "black"},
+          {"object": "backpack", "confidence": 0.88, "location_label": "by the door", "appearance": "blue backpack", "color": "blue"}
+        ]},
+        {"ago": "30s", "detections": [
+          {"object": "glasses", "confidence": 0.91, "location_label": "on the bedside table"},
+          {"object": "phone", "confidence": 0.999, "location_label": "next to the keyboard"},
+          {"object": "cup", "confidence": 0.74, "location_label": "on the windowsill"}
+        ]}
+      ]
+    },
+    "B": {
+      "name": "eval room B (camera stopped)",
+      "interval_s": 60,
+      "frames": [
+        {"ago": "2h", "detections": [
+          {"object": "wallet", "confidence": 0.90, "location_label": "on the sofa", "appearance": "brown wallet", "color": "brown"}
+        ]}
+      ]
+    },
+    "C": {
+      "name": "eval room C (no photos yet)",
+      "interval_s": 60,
+      "frames": []
+    }
+  }
+}
