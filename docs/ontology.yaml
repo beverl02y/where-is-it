@@ -99,7 +99,7 @@ evidence_sources:
     kind: interface_design
 
   parser_design:
-    file: parse_query_en.md
+    file: parse_query.md
     kind: deferred_design   # LLM parser deferred by SPEC 4.4; not the v2 Query
 
 validation_scope:

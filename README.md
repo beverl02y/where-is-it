@@ -224,6 +224,12 @@ Open one printed room link (http://localhost:8080/#room=…) and ask `Where are 
 |---|---|
 | `pytest -q` | All automated tests: search and answers, Korean, parser, question fallback, room isolation, keys and PIN, plus the retrieval golden test (`tests/test_search_golden.py` with `tests/harness/golden_cases.yaml`) |
 | `python evals/run_parse_prompt.py` | The Gemini parser prompt (prompt_version 3) on 23 questions; needs `GEMINI_API_KEY`; writes `prompt_test_log.md` |
+| `python evals/run_golden.py` | The golden cases in `tests/harness/golden_cases.yaml` through pytest; saves `evals/results/golden-<run_id>.json` and a line in `evals/results/history_golden.csv` |
+| `python evals/run_evals.py --change "baseline"` | The 43 eval cases in `evals/evalset.jsonl` with the code graders, offline (no key); saves `evals/results/<run_id>.json` and a line in `evals/results/history.csv` |
+| `python evals/run_evals.py --judge` | The same, plus the LLM judge (`evals/judge_prompt.md`); needs `GEMINI_API_KEY` |
+| `python evals/run_judge.py labels` → `run` → `agree` | Judges the saved answers in `evals/live_candidates.jsonl` and compares them with the human labels in `evals/judge_labels.jsonl` (target ≥ 80% agreement) |
+
+Metrics, targets and the dataset are described in `evals/EVAL_DESIGN.md`.
 
 ### 7.5 Core test scenarios
 Run the demo (7.3) and ask these questions in **Room A**, except the last one (**Room B**). Room A has: a phone on the desk next to the laptop in the latest photo (94%); glasses on the bedside table (91%, 3 hours earlier); a wallet on the desk (86%, 1 hour earlier); a weak charger detection on the bed (58%). Room B has glasses on the shelf above the desk (89%) in its latest photo.
@@ -249,11 +255,14 @@ Where this repository differs from the course's standard structure (`00_README.m
 |---|---|---|
 | `src/<package>/` (application code) | `app/` (server), `capture/` (camera client) | Moves to `src/whereisit/` after the peer-review week. |
 | `src/<package>/tools/` (lecture 6 tools) | — | The model is given no tools (`docs/ARCHITECTURE.md` §3). The root `tools/` holds operations and measurement scripts (`devices.py`, `seed_demo.py`, `evaluate.py`, `benchmark.py`, `make_label_template.py`, `gcp_https.sh`). |
-| `src/<package>/prompts/parse_query.md` | `src/whereisit/prompts/parse_query_en.md` | English prompt, prompt_version 3. The earlier Korean prompt (prompt_version 2) is in the Git history. |
+| `src/<package>/prompts/parse_query.md` | `src/whereisit/prompts/parse_query.md` | English prompt, prompt_version 3. The earlier Korean prompt (prompt_version 2) is in the Git history. |
 | `src/<package>/schemas/<class>.schema.json` | `src/whereisit/schemas/query.schema.json` | |
 | `docs/PROBLEM.md` | `docs/Problem.md` | |
 | `docs/research/interviews.md` | `docs/research/interviews_en.md`, `interviews_kr.md`, `interview_answers.md` | |
 | `data/seed/` | — | Demo data is created by `tools/seed_demo.py`. |
+| `evals/README.md` | `evals/EVAL_DESIGN.md` | Eval design: metrics, targets, dataset and judge. |
+| `docs/prompts/delegation_examples.md` | `docs/prompts/delegation_evals.md` | Delegation task for the eval runner. |
+| `evals/run_evals.py` | `evals/run_evals.py`, plus `evals/run_golden.py` and `evals/run_judge.py` | Golden-test runner and LLM-judge runner (7.4). |
 
 Also in this repository: `config.yaml` (runtime settings, read by the server), `config/rag.yaml` (question fallback design and values), `evals/run_parse_prompt.py` (parser prompt test), `docs/SETUP.md` (developer setup), `docs/ARCHITECTURE.md`, `CLAUDE.md`.
 
@@ -452,6 +461,7 @@ Also in this repository: `config.yaml` (runtime settings, read by the server), `
 - **데모 실행 (카메라·Gemini 없이):** `pip install "uvicorn[standard]"` → `export WIIA_MODEL_TYPE=none WIIA_API_KEY=demo` → `python tools/seed_demo.py` (데모 방 링크 2개 출력) → `uvicorn app.main:create_app --factory --port 8080` → 출력된 링크를 열고 `안경 어디 있어?` 질문
 - **실제 서버:** `.env.example`을 `.env`로 복사해 `WIIA_API_KEY`, `GEMINI_API_KEY`, `WIIA_INVITE_CODE` 설정 → `docker compose up -d --build` (자세한 단계: `docs/SETUP.md`)
 - **테스트:** `pytest -q` (골든 테스트 `tests/test_search_golden.py` 포함)
+- **평가:** `python evals/run_golden.py` (골든 케이스), `python evals/run_evals.py --change "baseline"` (평가 케이스 43개, 키 불필요), `python evals/run_evals.py --judge` (LLM 판정 포함, `GEMINI_API_KEY` 필요), `python evals/run_judge.py labels` → `run` → `agree` (판정과 사람 라벨 비교). 지표와 목표는 `evals/EVAL_DESIGN.md`에 있습니다.
 - **데모 시나리오:** 데모를 실행한 뒤 방 A에서 `Where is my phone?`(지금 보임, AC-03), `Where are my glasses?`(마지막으로 본 곳, AC-04·05), `Where is my charger?`(가능성 — 확인되지 않음, AC-06), `Where is my cable?`(다시 알려 주세요, AC-02), `안경 어디 있어?`(한국어 답변, AC-13)를 질문하세요. 데모의 최신 사진은 `seed_demo.py` 실행 후 2분 동안만 현재 화면으로 인정됩니다.
 
 핵심 테스트 시나리오(입력, 기대 결과, 관련 AC)와 강의 표준 구조와 다른 파일 위치 표는 [English 7.5–7.6](#75-core-test-scenarios)에 있습니다.
